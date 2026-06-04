@@ -45,13 +45,17 @@ export interface IncomeBreakdownItem {
 }
 
 export interface IncomeBreakdown {
-  source: 'csv' | 'manual'
+  source: 'csv' | 'manual' | 'snapshot'
   coverageStatus: 'missing' | 'partial' | 'complete'
   items: IncomeBreakdownItem[]
   total: number
 }
 
 export interface SavingsBreakdown {
+  tradeRepublicCashContribution?: number
+  tradeRepublicEquity?: number
+  tradeRepublicFixedIncome?: number
+  tradeRepublicCrypto?: number
   myInvestor: number
   myInvestorEquity: number
   myInvestorFixedIncome: number

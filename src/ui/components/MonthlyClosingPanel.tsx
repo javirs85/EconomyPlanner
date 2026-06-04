@@ -3,7 +3,9 @@ import {
   getMonthlyClosing,
   saveMonthlyClosing,
   type CsvCoverage,
+  type IgnoredTradeRepublicOutbound,
   type MonthlySnapshot,
+  type TradeRepublicFacts,
 } from '../../application/monthlyClosing/monthlyClosing'
 import { formatMoney } from '../../shared/money/formatMoney'
 
@@ -16,24 +18,29 @@ const balanceSections = [
     title: 'Trade Republic',
     fields: [
       ['tradeRepublicCashBalance', 'TR CC'],
-      ['tradeRepublicEquityValue', 'TR RV'],
-      ['tradeRepublicFixedIncomeValue', 'TR RF'],
-      ['tradeRepublicCryptoValue', 'TR Cripto'],
+      ['tradeRepublicEquityValue', 'TR RV valor'],
+      ['tradeRepublicEquityPrincipal', 'TR RV aportado'],
+      ['tradeRepublicFixedIncomeValue', 'TR RF vivo'],
+      ['tradeRepublicCryptoValue', 'TR Cripto valor'],
+      ['tradeRepublicCryptoPrincipal', 'TR Cripto aportado'],
     ] as const,
   },
   {
     title: 'MyInvestor',
     fields: [
-      ['myInvestorEquityValue', 'RV'],
-      ['myInvestorFixedIncomeValue', 'RF'],
-      ['myInvestorCryptoValue', 'Cripto'],
+      ['myInvestorEquityValue', 'RV valor'],
+      ['myInvestorEquityPrincipal', 'RV aportado'],
+      ['myInvestorFixedIncomeValue', 'RF vivo'],
+      ['myInvestorCryptoValue', 'Cripto valor'],
+      ['myInvestorCryptoPrincipal', 'Cripto aportado'],
     ] as const,
   },
   {
     title: 'Otros',
     fields: [
       ['criptanCryptoValue', 'Criptan'],
-      ['urbanitaeRealEstateValue', 'Urbanitae'],
+      ['urbanitaeRealEstateValue', 'Urbanitae valor'],
+      ['urbanitaeRealEstatePrincipal', 'Urbanitae aportado'],
     ] as const,
   },
 ] as const
@@ -48,18 +55,33 @@ const emptyValues: FormValues = {
   caixaBalance: '',
   tradeRepublicCashBalance: '',
   tradeRepublicEquityValue: '',
+  tradeRepublicEquityPrincipal: '',
   tradeRepublicFixedIncomeValue: '0',
   tradeRepublicCryptoValue: '',
+  tradeRepublicCryptoPrincipal: '',
   myInvestorEquityValue: '',
+  myInvestorEquityPrincipal: '',
   myInvestorFixedIncomeValue: '0',
   myInvestorCryptoValue: '',
+  myInvestorCryptoPrincipal: '',
   criptanCryptoValue: '',
   urbanitaeRealEstateValue: '',
+  urbanitaeRealEstatePrincipal: '',
   myInvestorEquityExternalFlow: '0',
   myInvestorFixedIncomeExternalFlow: '0',
   myInvestorCryptoExternalFlow: '0',
   criptanExternalFlow: '0',
   urbanitaeExternalFlow: '0',
+}
+
+const emptyTradeRepublicFacts: TradeRepublicFacts = {
+  tradeRepublicCashContribution: 0,
+  tradeRepublicEquityFlow: 0,
+  tradeRepublicFixedIncomeFlow: 0,
+  tradeRepublicCryptoFlow: 0,
+  generatedCash: 0,
+  cardExpenses: 0,
+  ignoredOutbounds: [],
 }
 
 function periodForMonth(month: string) {
@@ -83,7 +105,7 @@ function formatInputNumber(value: number) {
 function snapshotToValues(snapshot: MonthlySnapshot): FormValues {
   return {
     ...Object.fromEntries(
-      balanceFields.map((key) => [key, formatInputNumber(Number(snapshot[key]))]),
+      balanceFields.map((key) => [key, formatInputNumber(Number(snapshot[key] ?? 0))]),
     ),
     myInvestorEquityExternalFlow: formatInputNumber(snapshot.myInvestorEquityExternalFlow ?? snapshot.myInvestorExternalFlow ?? 0),
     myInvestorFixedIncomeExternalFlow: formatInputNumber(snapshot.myInvestorFixedIncomeExternalFlow ?? 0),
@@ -91,6 +113,10 @@ function snapshotToValues(snapshot: MonthlySnapshot): FormValues {
     criptanExternalFlow: formatInputNumber(snapshot.criptanExternalFlow ?? 0),
     urbanitaeExternalFlow: formatInputNumber(snapshot.urbanitaeExternalFlow ?? 0),
   } as FormValues
+}
+
+function pvpProfit(values: FormValues, valueField: keyof FormValues, principalField: keyof FormValues) {
+  return numericValue(values[valueField]) - numericValue(values[principalField])
 }
 
 function resolveSumExpression(value: string) {
@@ -131,7 +157,7 @@ export function MonthlyClosingPanel({
 }) {
   const period = useMemo(() => periodForMonth(month), [month])
   const [values, setValues] = useState(emptyValues)
-  const [tradeRepublicExternalFlow, setTradeRepublicExternalFlow] = useState(0)
+  const [tradeRepublicFacts, setTradeRepublicFacts] = useState<TradeRepublicFacts>(emptyTradeRepublicFacts)
   const [coverage, setCoverage] = useState<CsvCoverage>({ status: 'missing' })
   const [saved, setSaved] = useState(false)
   const [expanded, setExpanded] = useState(true)
@@ -143,7 +169,7 @@ export function MonthlyClosingPanel({
     void getMonthlyClosing(period.month, period.periodStart, period.periodEnd)
       .then((status) => {
         if (ignore) return
-        setTradeRepublicExternalFlow(status.tradeRepublicExternalFlow)
+        setTradeRepublicFacts(status.tradeRepublicFacts ?? { ...emptyTradeRepublicFacts, tradeRepublicCashContribution: status.tradeRepublicExternalFlow })
         setCoverage(status.csvCoverage)
         setSaved(Boolean(status.snapshot))
         setExpanded(!status.snapshot)
@@ -202,6 +228,11 @@ export function MonthlyClosingPanel({
     }
   }
 
+  function profitBadge(valueField: keyof FormValues, principalField: keyof FormValues) {
+    const profit = pvpProfit(values, valueField, principalField)
+    return <small className={profit >= 0 ? 'pvp-profit positive' : 'pvp-profit negative'}>Beneficio {formatMoney(profit)}</small>
+  }
+
   async function submit(event: React.FormEvent) {
     event.preventDefault()
     setSaving(true)
@@ -209,7 +240,7 @@ export function MonthlyClosingPanel({
     try {
       const amounts = Object.fromEntries(Object.entries(values).map(([key, value]) => [key, numericValue(value)]))
       const status = await saveMonthlyClosing({ ...amounts, ...period } as MonthlySnapshot)
-      setTradeRepublicExternalFlow(status.tradeRepublicExternalFlow)
+      setTradeRepublicFacts(status.tradeRepublicFacts ?? { ...emptyTradeRepublicFacts, tradeRepublicCashContribution: status.tradeRepublicExternalFlow })
       setCoverage(status.csvCoverage)
       setSaved(true)
       setExpanded(false)
@@ -251,6 +282,11 @@ export function MonthlyClosingPanel({
                     <label className="balance-input" key={field}>
                       <span>{label}</span><small>Saldo de cierre</small>
                       <div><input min="0" {...inputFor(field)} /><b>EUR</b></div>
+                      {field === 'tradeRepublicEquityValue' && profitBadge('tradeRepublicEquityValue', 'tradeRepublicEquityPrincipal')}
+                      {field === 'tradeRepublicCryptoValue' && profitBadge('tradeRepublicCryptoValue', 'tradeRepublicCryptoPrincipal')}
+                      {field === 'myInvestorEquityValue' && profitBadge('myInvestorEquityValue', 'myInvestorEquityPrincipal')}
+                      {field === 'myInvestorCryptoValue' && profitBadge('myInvestorCryptoValue', 'myInvestorCryptoPrincipal')}
+                      {field === 'urbanitaeRealEstateValue' && profitBadge('urbanitaeRealEstateValue', 'urbanitaeRealEstatePrincipal')}
                     </label>
                   ))}
                 </div>
@@ -294,13 +330,46 @@ export function MonthlyClosingPanel({
               <span>Criptan flow</span><small>Flujo externo manual del periodo</small>
               <div><input {...inputFor('criptanExternalFlow')} /><b>EUR</b></div>
             </label>
-            <div className="detected-flow"><span>TR flow</span><small>No editable, detectado en CSV</small><strong>{tradeRepublicExternalFlow >= 0 ? '+' : ''}{formatMoney(tradeRepublicExternalFlow)}</strong></div>
+            <DetectedFlow label="TR aportado" value={tradeRepublicFacts.tradeRepublicCashContribution} />
+            <DetectedFlow label="TR RV flow" value={tradeRepublicFacts.tradeRepublicEquityFlow} />
+            <DetectedFlow label="TR RF flow" value={tradeRepublicFacts.tradeRepublicFixedIncomeFlow} />
+            <DetectedFlow label="TR Cripto flow" value={tradeRepublicFacts.tradeRepublicCryptoFlow} />
+            <DetectedFlow label="Generated cash" value={tradeRepublicFacts.generatedCash} />
             <div className="closing-total"><span>Patrimonio introducido</span><strong>{formatMoney(total)}</strong></div>
             <button className="primary-button" disabled={saving} type="submit">{saving ? 'Guardando...' : 'Guardar'}</button>
           </div>
+          {tradeRepublicFacts.ignoredOutbounds.length > 0 && <IgnoredOutboundsWarning outbounds={tradeRepublicFacts.ignoredOutbounds} />}
           {error && <p className="import-error">{error}</p>}
         </form>
       )}
     </section>
+  )
+}
+
+function DetectedFlow({ label, value }: { label: string, value: number }) {
+  return (
+    <div className="detected-flow">
+      <span>{label}</span>
+      <small>No editable, detectado en CSV</small>
+      <strong>{value >= 0 ? '+' : ''}{formatMoney(value)}</strong>
+    </div>
+  )
+}
+
+function IgnoredOutboundsWarning({ outbounds }: { outbounds: IgnoredTradeRepublicOutbound[] }) {
+  return (
+    <div className="outbound-warning">
+      <span>Outbounds ignorados</span>
+      <p>No los he considerado flow. Si alguno mueve dinero hacia otra plataforma, integralo en el flow manual correspondiente.</p>
+      <div>
+        {outbounds.map((outbound, index) => (
+          <article key={`${outbound.date}-${outbound.amount}-${index}`}>
+            <b>{formatDate(outbound.date)}</b>
+            <strong>{formatMoney(outbound.amount)}</strong>
+            <small>{outbound.description || outbound.counterpartyName || outbound.paymentReference || 'Transferencia saliente'}</small>
+          </article>
+        ))}
+      </div>
+    </div>
   )
 }

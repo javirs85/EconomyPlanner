@@ -2,7 +2,7 @@ const objectKey = 'economy-planner/data.json'
 
 export function emptyData() {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     transactions: [],
     importBatches: [],
     monthlySnapshots: [],
@@ -10,9 +10,16 @@ export function emptyData() {
 }
 
 function normalizeSnapshot(snapshot) {
+  const generatedCash = snapshot.generatedCash ?? snapshot.reportedGeneratedCash ?? 0
   return {
     ...snapshot,
+    schemaVersion: 2,
     criptanCryptoValue: snapshot.criptanCryptoValue ?? 0,
+    tradeRepublicCashContribution: snapshot.tradeRepublicCashContribution ?? snapshot.tradeRepublicExternalFlow ?? 0,
+    tradeRepublicEquityFlow: snapshot.tradeRepublicEquityFlow ?? 0,
+    tradeRepublicFixedIncomeFlow: snapshot.tradeRepublicFixedIncomeFlow ?? 0,
+    tradeRepublicCryptoFlow: snapshot.tradeRepublicCryptoFlow ?? 0,
+    generatedCash,
     myInvestorEquityExternalFlow: snapshot.myInvestorEquityExternalFlow ?? snapshot.myInvestorExternalFlow ?? 0,
     myInvestorFixedIncomeExternalFlow: snapshot.myInvestorFixedIncomeExternalFlow ?? 0,
     myInvestorCryptoExternalFlow: snapshot.myInvestorCryptoExternalFlow ?? 0,
@@ -23,14 +30,19 @@ function normalizeSnapshot(snapshot) {
     urbanitaeExternalFlow: snapshot.urbanitaeExternalFlow ?? 0,
     reportedInterest: snapshot.reportedInterest ?? 0,
     reportedBondPayments: snapshot.reportedBondPayments ?? 0,
-    reportedGeneratedCash: snapshot.reportedGeneratedCash ?? 0,
+    reportedGeneratedCash: generatedCash,
+    tradeRepublicEquityPrincipal: snapshot.tradeRepublicEquityPrincipal ?? snapshot.tradeRepublicEquityValue ?? 0,
+    tradeRepublicCryptoPrincipal: snapshot.tradeRepublicCryptoPrincipal ?? snapshot.tradeRepublicCryptoValue ?? 0,
+    myInvestorEquityPrincipal: snapshot.myInvestorEquityPrincipal ?? snapshot.myInvestorEquityValue ?? 0,
+    myInvestorCryptoPrincipal: snapshot.myInvestorCryptoPrincipal ?? snapshot.myInvestorCryptoValue ?? 0,
+    urbanitaeRealEstatePrincipal: snapshot.urbanitaeRealEstatePrincipal ?? snapshot.urbanitaeRealEstateValue ?? 0,
   }
 }
 
 export function normalizeData(data) {
   const normalized = data && typeof data === 'object' ? data : emptyData()
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     transactions: Array.isArray(normalized.transactions) ? normalized.transactions : [],
     importBatches: Array.isArray(normalized.importBatches) ? normalized.importBatches : [],
     monthlySnapshots: Array.isArray(normalized.monthlySnapshots)

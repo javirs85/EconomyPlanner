@@ -153,7 +153,11 @@ function IncomeRow({ item, max }: { item: IncomeBreakdownItem; max: number }) {
 function IncomeBreakdownCard({ snapshot }: { snapshot: MonthlyOriginStack }) {
   const items = snapshot.incomeBreakdown.items.filter((item) => item.value > 0)
   const max = Math.max(...items.map((item) => item.value), 0)
-  const sourceLabel = snapshot.incomeBreakdown.source === 'csv' ? 'Detectado en CSV' : 'Fallback manual'
+  const sourceLabel = snapshot.incomeBreakdown.source === 'snapshot'
+    ? 'Guardado en snapshot'
+    : snapshot.incomeBreakdown.source === 'csv'
+      ? 'Detectado en CSV'
+      : 'Fallback manual'
 
   return (
     <article className="panel income-card">

@@ -195,10 +195,9 @@ h2 { color: #263a33; font: 600 23px/1.15 'Fraunces', serif; margin: 0 0 7px; }
 .closing-form-stack { display: grid; gap: 12px; margin-top: 17px; }
 .closing-section { min-width: 0; margin: 0; padding: 11px; border: 1px solid #dfe9e4; border-radius: 8px; background: #fbfdfb; }
 .closing-section legend { padding: 0 5px; color: #47665b; font-size: 10px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; }
-.closing-form-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+.closing-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 9px; }
 .closing-section-caixa .closing-form-grid { grid-template-columns: minmax(0, 1fr); max-width: 250px; }
-.closing-section-myinvestor .closing-form-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.closing-section-otros .closing-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.closing-section-myinvestor .closing-form-grid, .closing-section-otros .closing-form-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 .balance-input { display: block; padding: 10px; border: 1px solid #e0e9e4; border-radius: 8px; background: #fff; }
 .balance-input span, .balance-input small { display: block; }
 .balance-input span, .detected-flow span, .closing-total span { color: #47665b; font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
@@ -207,6 +206,9 @@ h2 { color: #263a33; font: 600 23px/1.15 'Fraunces', serif; margin: 0 0 7px; }
 .balance-input input { width: 100%; min-width: 0; padding: 4px 0; border: 0; border-bottom: 1px solid #e7ece9; color: #38564c; background: transparent; font: 600 17px/1 'Fraunces', serif; outline: 0; }
 .balance-input input:focus { border-bottom-color: #6c9c89; }
 .balance-input b { color: #8b9893; font-size: 11px; }
+.pvp-profit { margin-top: 7px; min-height: 0; }
+.pvp-profit.positive { color: #34785c; }
+.pvp-profit.negative { color: #a46666; }
 .cash-plan { margin-top: 9px; padding: 11px 12px; border: 1px solid #dce7e1; border-radius: 8px; background: #f3f8f4; }
 .cash-plan-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .cash-plan-heading span, .cash-plan-heading small { display: block; }
@@ -223,6 +225,14 @@ h2 { color: #263a33; font: 600 23px/1.15 'Fraunces', serif; margin: 0 0 7px; }
 .detected-flow strong, .closing-total strong { color: #34785c; font: 600 18px/1 'Fraunces', serif; margin-top: 6px; }
 .closing-total { background: #f0f4f2; }.closing-total strong { color: #38564c; }
 .closing-flow-row .primary-button { min-height: 68px; align-self: stretch; }
+.outbound-warning { margin-top: 10px; padding: 11px 12px; border: 1px solid #e3cdbb; border-radius: 8px; background: #fff8f1; }
+.outbound-warning > span { display: block; color: #8d603f; font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
+.outbound-warning p { margin: 4px 0 9px; color: #8b735f; font-size: 12px; }
+.outbound-warning div { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; }
+.outbound-warning article { display: grid; grid-template-columns: auto auto; gap: 4px 8px; padding: 8px; border: 1px solid #edd9c8; border-radius: 8px; background: #fffdf9; }
+.outbound-warning article b { color: #77553b; font-size: 11px; }
+.outbound-warning article strong { color: #a15f38; font-size: 12px; text-align: right; }
+.outbound-warning article small { grid-column: 1 / -1; color: #8b735f; font-size: 11px; }
 .monthly-closing.collapsed { padding-block: 15px; }
 .explorer-filters { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-top: 14px; padding: 13px 14px; }
 .preset-row { display: flex; flex-wrap: wrap; gap: 5px; }

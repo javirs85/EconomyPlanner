@@ -1,4 +1,5 @@
 import Papa from 'papaparse'
+import { classifyTradeRepublicTransactions, netAmount } from '../shared/economyDomain.js'
 
 const recognizedTypes = new Set([
   'BENEFITS_SAVEBACK',
@@ -58,24 +59,25 @@ function createEmptySummary() {
 function summarize(transactions) {
   const summary = createEmptySummary()
   summary.rowCount = transactions.length
+  const facts = classifyTradeRepublicTransactions(transactions)
 
   for (const transaction of transactions) {
     const type = transaction.type ?? ''
-    const amount = transaction.amount ?? 0
+    const amount = netAmount(transaction)
 
     if (!recognizedTypes.has(type)) summary.unknownCount += 1
     if (type === 'INTEREST_PAYMENT') summary.interest += amount
     if (type === 'DIVIDEND' || type === 'DIVIDEND_PAYMENT') summary.dividends += amount
-    if (type === 'FINAL_MATURITY') summary.bondMaturities += Math.max(0, amount)
+    if (type === 'FINAL_MATURITY' && transaction.category === 'CASH') summary.bondMaturities += Math.max(0, amount)
     if (type === 'BENEFITS_SAVEBACK' || type === 'STOCKPERK') summary.benefits += amount
     if (type === 'BUY') summary.buys += Math.abs(amount)
     if (type === 'SELL') summary.sells += Math.abs(amount)
     if (type === 'CUSTOMER_INBOUND' || type === 'TRANSFER_INBOUND' || type === 'TRANSFER_INSTANT_INBOUND') summary.externalContributions += Math.abs(amount)
     if (type === 'CUSTOMER_OUTBOUND' || type === 'TRANSFER_OUTBOUND' || type === 'TRANSFER_INSTANT_OUTBOUND') summary.externalWithdrawals += Math.abs(amount)
-    if (type === 'CARD_TRANSACTION' || type === 'CARD_TRANSACTION_INTERNATIONAL') summary.cardExpenses += Math.abs(amount)
     if (type === 'TAX' || type === 'TAX_OPTIMIZATION') summary.taxes += Math.abs(transaction.tax ?? amount)
   }
 
+  summary.cardExpenses = facts.cardExpenses
   return summary
 }
 
