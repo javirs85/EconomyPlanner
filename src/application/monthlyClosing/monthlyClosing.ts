@@ -54,6 +54,7 @@ export interface TradeRepublicFacts {
 
 export interface MonthlyClosingStatus {
   snapshot?: MonthlySnapshot
+  previousSnapshot?: MonthlySnapshot
   tradeRepublicExternalFlow: number
   tradeRepublicFacts: TradeRepublicFacts
   csvCoverage: CsvCoverage

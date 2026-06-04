@@ -1,9 +1,49 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { classifyTradeRepublicTransactions, netAmount } from '../shared/economyDomain.js'
+import { classifyTradeRepublicTransactions, netAmount, resolveSnapshotPrincipals } from '../shared/economyDomain.js'
 
 test('netAmount uses amount plus tax and fee as the accounting amount', () => {
   assert.equal(netAmount({ amount: 15, tax: -2.85, fee: -0.15 }), 12)
+})
+
+test('resolves baseline principals from inputs and tracked principals from previous snapshot plus flows', () => {
+  assert.deepEqual(resolveSnapshotPrincipals({
+    month: '2026-05',
+    tradeRepublicEquityValue: 100,
+    tradeRepublicEquityPrincipal: 80,
+    tradeRepublicCryptoValue: 30,
+    myInvestorEquityValue: 40,
+    myInvestorCryptoValue: 50,
+    urbanitaeRealEstateValue: 60,
+  }, undefined), {
+    tradeRepublicEquityPrincipal: 80,
+    tradeRepublicCryptoPrincipal: 30,
+    myInvestorEquityPrincipal: 40,
+    myInvestorCryptoPrincipal: 50,
+    urbanitaeRealEstatePrincipal: 60,
+  })
+
+  assert.deepEqual(resolveSnapshotPrincipals({
+    month: '2026-06',
+    myInvestorEquityExternalFlow: 10,
+    myInvestorCryptoExternalFlow: -5,
+    urbanitaeExternalFlow: 20,
+  }, {
+    tradeRepublicEquityPrincipal: 100,
+    tradeRepublicCryptoPrincipal: 200,
+    myInvestorEquityPrincipal: 300,
+    myInvestorCryptoPrincipal: 400,
+    urbanitaeRealEstatePrincipal: 500,
+  }, {
+    tradeRepublicEquityFlow: 15,
+    tradeRepublicCryptoFlow: -25,
+  }), {
+    tradeRepublicEquityPrincipal: 115,
+    tradeRepublicCryptoPrincipal: 175,
+    myInvestorEquityPrincipal: 310,
+    myInvestorCryptoPrincipal: 395,
+    urbanitaeRealEstatePrincipal: 520,
+  })
 })
 
 test('classifies generated cash, investment flows, expenses, maturities and outbounds', () => {

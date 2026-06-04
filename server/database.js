@@ -9,6 +9,7 @@ import {
   myInvestorExternalFlow,
   netAmount,
   normalizeSnapshotOrigin,
+  resolveSnapshotPrincipals,
 } from '../shared/economyDomain.js'
 
 const workspace = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -392,6 +393,16 @@ function calculateTradeRepublicFacts(periodStart, periodEnd) {
   return classifyTradeRepublicTransactions(getTradeRepublicTransactions(periodStart, periodEnd), periodStart, periodEnd)
 }
 
+function getPreviousMonthlySnapshot(month) {
+  const row = database.prepare(`
+    SELECT * FROM monthly_snapshots
+    WHERE month < ?
+    ORDER BY month DESC
+    LIMIT 1
+  `).get(month)
+  return mapMonthlySnapshot(row)
+}
+
 function mapMonthlySnapshot(row) {
   if (!row) return undefined
   return {
@@ -454,6 +465,7 @@ export function getMonthlyClosing({ month, periodStart, periodEnd }) {
 
   return {
     snapshot: mapMonthlySnapshot(snapshot),
+    previousSnapshot: getPreviousMonthlySnapshot(month),
     tradeRepublicExternalFlow: tradeRepublicFacts.tradeRepublicCashContribution,
     tradeRepublicFacts,
     csvCoverage: getCsvCoverage(periodStart, periodEnd),
@@ -469,11 +481,12 @@ export function saveMonthlyClosing(snapshot) {
   const createdAt = existing?.created_at ?? now
   const tradeRepublicFacts = calculateTradeRepublicFacts(snapshot.periodStart, snapshot.periodEnd)
   const generatedCash = tradeRepublicFacts.generatedCash
-  const tradeRepublicEquityPrincipal = snapshot.tradeRepublicEquityPrincipal ?? snapshot.tradeRepublicEquityValue ?? 0
-  const tradeRepublicCryptoPrincipal = snapshot.tradeRepublicCryptoPrincipal ?? snapshot.tradeRepublicCryptoValue ?? 0
-  const myInvestorEquityPrincipal = snapshot.myInvestorEquityPrincipal ?? snapshot.myInvestorEquityValue ?? 0
-  const myInvestorCryptoPrincipal = snapshot.myInvestorCryptoPrincipal ?? snapshot.myInvestorCryptoValue ?? 0
-  const urbanitaeRealEstatePrincipal = snapshot.urbanitaeRealEstatePrincipal ?? snapshot.urbanitaeRealEstateValue ?? 0
+  const principals = resolveSnapshotPrincipals(snapshot, getPreviousMonthlySnapshot(snapshot.month), tradeRepublicFacts)
+  const tradeRepublicEquityPrincipal = principals.tradeRepublicEquityPrincipal
+  const tradeRepublicCryptoPrincipal = principals.tradeRepublicCryptoPrincipal
+  const myInvestorEquityPrincipal = principals.myInvestorEquityPrincipal
+  const myInvestorCryptoPrincipal = principals.myInvestorCryptoPrincipal
+  const urbanitaeRealEstatePrincipal = principals.urbanitaeRealEstatePrincipal
 
   database.prepare(`
     INSERT INTO monthly_snapshots (

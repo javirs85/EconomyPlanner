@@ -222,6 +222,7 @@ h2 { color: #263a33; font: 600 23px/1.15 'Fraunces', serif; margin: 0 0 7px; }
 .cash-plan-warning { color: #a46666; }.cash-plan-note { color: #7b8983; }
 .closing-flow-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); align-items: stretch; gap: 9px; margin-top: 9px; }
 .detected-flow, .closing-total { display: flex; flex-direction: column; justify-content: center; padding: 10px 12px; border: 1px solid #dce7e1; border-radius: 8px; background: #eff6f0; }
+.auto-principal { background: #f7faf8; }
 .detected-flow strong, .closing-total strong { color: #34785c; font: 600 18px/1 'Fraunces', serif; margin-top: 6px; }
 .closing-total { background: #f0f4f2; }.closing-total strong { color: #38564c; }
 .closing-flow-row .primary-button { min-height: 68px; align-self: stretch; }

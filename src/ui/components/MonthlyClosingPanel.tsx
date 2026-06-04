@@ -46,6 +46,14 @@ const balanceSections = [
 ] as const
 
 const balanceFields = balanceSections.flatMap((section) => section.fields.map(([field]) => field))
+const principalFields = new Set<string>([
+  'tradeRepublicEquityPrincipal',
+  'tradeRepublicCryptoPrincipal',
+  'myInvestorEquityPrincipal',
+  'myInvestorCryptoPrincipal',
+  'urbanitaeRealEstatePrincipal',
+])
+const netWorthFields = balanceFields.filter((field) => !principalFields.has(field))
 
 type BalanceField = typeof balanceFields[number]
 type FlowField = 'myInvestorEquityExternalFlow' | 'myInvestorFixedIncomeExternalFlow' | 'myInvestorCryptoExternalFlow' | 'criptanExternalFlow' | 'urbanitaeExternalFlow'
@@ -115,10 +123,6 @@ function snapshotToValues(snapshot: MonthlySnapshot): FormValues {
   } as FormValues
 }
 
-function pvpProfit(values: FormValues, valueField: keyof FormValues, principalField: keyof FormValues) {
-  return numericValue(values[valueField]) - numericValue(values[principalField])
-}
-
 function resolveSumExpression(value: string) {
   const normalized = value.replace(',', '.').trim()
   if (!normalized.includes('+')) {
@@ -158,6 +162,7 @@ export function MonthlyClosingPanel({
   const period = useMemo(() => periodForMonth(month), [month])
   const [values, setValues] = useState(emptyValues)
   const [tradeRepublicFacts, setTradeRepublicFacts] = useState<TradeRepublicFacts>(emptyTradeRepublicFacts)
+  const [previousSnapshot, setPreviousSnapshot] = useState<MonthlySnapshot>()
   const [coverage, setCoverage] = useState<CsvCoverage>({ status: 'missing' })
   const [saved, setSaved] = useState(false)
   const [expanded, setExpanded] = useState(true)
@@ -170,6 +175,7 @@ export function MonthlyClosingPanel({
       .then((status) => {
         if (ignore) return
         setTradeRepublicFacts(status.tradeRepublicFacts ?? { ...emptyTradeRepublicFacts, tradeRepublicCashContribution: status.tradeRepublicExternalFlow })
+        setPreviousSnapshot(status.previousSnapshot)
         setCoverage(status.csvCoverage)
         setSaved(Boolean(status.snapshot))
         setExpanded(!status.snapshot)
@@ -182,7 +188,8 @@ export function MonthlyClosingPanel({
     return () => { ignore = true }
   }, [period.month, period.periodEnd, period.periodStart, refreshKey])
 
-  const total = balanceFields.reduce((sum, field) => sum + numericValue(values[field]), 0)
+  const total = netWorthFields.reduce((sum, field) => sum + numericValue(values[field]), 0)
+  const principalInputsEditable = period.month <= '2026-05' || !previousSnapshot
   const coverageStatus = coverageCopy(coverage, period.periodEnd)
   const cashPlan = useMemo(() => {
     const target = 10_000
@@ -229,8 +236,42 @@ export function MonthlyClosingPanel({
   }
 
   function profitBadge(valueField: keyof FormValues, principalField: keyof FormValues) {
-    const profit = pvpProfit(values, valueField, principalField)
+    const profit = profitFor(valueField, principalField)
     return <small className={profit >= 0 ? 'pvp-profit positive' : 'pvp-profit negative'}>Beneficio {formatMoney(profit)}</small>
+  }
+
+  function principalFor(field: keyof FormValues) {
+    if (principalInputsEditable) return numericValue(values[field])
+    if (field === 'tradeRepublicEquityPrincipal') {
+      return Math.max(0, (previousSnapshot?.tradeRepublicEquityPrincipal ?? previousSnapshot?.tradeRepublicEquityValue ?? 0) + tradeRepublicFacts.tradeRepublicEquityFlow)
+    }
+    if (field === 'tradeRepublicCryptoPrincipal') {
+      return Math.max(0, (previousSnapshot?.tradeRepublicCryptoPrincipal ?? previousSnapshot?.tradeRepublicCryptoValue ?? 0) + tradeRepublicFacts.tradeRepublicCryptoFlow)
+    }
+    if (field === 'myInvestorEquityPrincipal') {
+      return Math.max(0, (previousSnapshot?.myInvestorEquityPrincipal ?? previousSnapshot?.myInvestorEquityValue ?? 0) + numericValue(values.myInvestorEquityExternalFlow))
+    }
+    if (field === 'myInvestorCryptoPrincipal') {
+      return Math.max(0, (previousSnapshot?.myInvestorCryptoPrincipal ?? previousSnapshot?.myInvestorCryptoValue ?? 0) + numericValue(values.myInvestorCryptoExternalFlow))
+    }
+    if (field === 'urbanitaeRealEstatePrincipal') {
+      return Math.max(0, (previousSnapshot?.urbanitaeRealEstatePrincipal ?? previousSnapshot?.urbanitaeRealEstateValue ?? 0) + numericValue(values.urbanitaeExternalFlow))
+    }
+    return numericValue(values[field])
+  }
+
+  function currentPrincipalValues() {
+    return {
+      tradeRepublicEquityPrincipal: principalFor('tradeRepublicEquityPrincipal'),
+      tradeRepublicCryptoPrincipal: principalFor('tradeRepublicCryptoPrincipal'),
+      myInvestorEquityPrincipal: principalFor('myInvestorEquityPrincipal'),
+      myInvestorCryptoPrincipal: principalFor('myInvestorCryptoPrincipal'),
+      urbanitaeRealEstatePrincipal: principalFor('urbanitaeRealEstatePrincipal'),
+    }
+  }
+
+  function profitFor(valueField: keyof FormValues, principalField: keyof FormValues) {
+    return numericValue(values[valueField]) - principalFor(principalField)
   }
 
   async function submit(event: React.FormEvent) {
@@ -238,9 +279,13 @@ export function MonthlyClosingPanel({
     setSaving(true)
     setError(undefined)
     try {
-      const amounts = Object.fromEntries(Object.entries(values).map(([key, value]) => [key, numericValue(value)]))
+      const amounts = {
+        ...Object.fromEntries(Object.entries(values).map(([key, value]) => [key, numericValue(value)])),
+        ...currentPrincipalValues(),
+      }
       const status = await saveMonthlyClosing({ ...amounts, ...period } as MonthlySnapshot)
       setTradeRepublicFacts(status.tradeRepublicFacts ?? { ...emptyTradeRepublicFacts, tradeRepublicCashContribution: status.tradeRepublicExternalFlow })
+      setPreviousSnapshot(status.previousSnapshot)
       setCoverage(status.csvCoverage)
       setSaved(true)
       setExpanded(false)
@@ -279,15 +324,19 @@ export function MonthlyClosingPanel({
                 <legend>{section.title}</legend>
                 <div className="closing-form-grid">
                   {section.fields.map(([field, label]) => (
-                    <label className="balance-input" key={field}>
-                      <span>{label}</span><small>Saldo de cierre</small>
-                      <div><input min="0" {...inputFor(field)} /><b>EUR</b></div>
-                      {field === 'tradeRepublicEquityValue' && profitBadge('tradeRepublicEquityValue', 'tradeRepublicEquityPrincipal')}
-                      {field === 'tradeRepublicCryptoValue' && profitBadge('tradeRepublicCryptoValue', 'tradeRepublicCryptoPrincipal')}
-                      {field === 'myInvestorEquityValue' && profitBadge('myInvestorEquityValue', 'myInvestorEquityPrincipal')}
-                      {field === 'myInvestorCryptoValue' && profitBadge('myInvestorCryptoValue', 'myInvestorCryptoPrincipal')}
-                      {field === 'urbanitaeRealEstateValue' && profitBadge('urbanitaeRealEstateValue', 'urbanitaeRealEstatePrincipal')}
-                    </label>
+                    principalFields.has(field) && !principalInputsEditable
+                      ? <AutoPrincipalCard field={field} label={label} principal={principalFor(field)} key={field} />
+                      : (
+                        <label className="balance-input" key={field}>
+                          <span>{label}</span><small>{principalFields.has(field) ? 'Baseline editable' : 'Saldo de cierre'}</small>
+                          <div><input min="0" {...inputFor(field)} /><b>EUR</b></div>
+                          {field === 'tradeRepublicEquityValue' && profitBadge('tradeRepublicEquityValue', 'tradeRepublicEquityPrincipal')}
+                          {field === 'tradeRepublicCryptoValue' && profitBadge('tradeRepublicCryptoValue', 'tradeRepublicCryptoPrincipal')}
+                          {field === 'myInvestorEquityValue' && profitBadge('myInvestorEquityValue', 'myInvestorEquityPrincipal')}
+                          {field === 'myInvestorCryptoValue' && profitBadge('myInvestorCryptoValue', 'myInvestorCryptoPrincipal')}
+                          {field === 'urbanitaeRealEstateValue' && profitBadge('urbanitaeRealEstateValue', 'urbanitaeRealEstatePrincipal')}
+                        </label>
+                      )
                   ))}
                 </div>
                 {section.title === 'Trade Republic' && tradeRepublicImport}
@@ -352,6 +401,16 @@ function DetectedFlow({ label, value }: { label: string, value: number }) {
       <span>{label}</span>
       <small>No editable, detectado en CSV</small>
       <strong>{value >= 0 ? '+' : ''}{formatMoney(value)}</strong>
+    </div>
+  )
+}
+
+function AutoPrincipalCard({ field, label, principal }: { field: string, label: string, principal: number }) {
+  return (
+    <div className="detected-flow auto-principal" data-field={field}>
+      <span>{label}</span>
+      <small>Calculado: anterior + flow</small>
+      <strong>{formatMoney(principal)}</strong>
     </div>
   )
 }

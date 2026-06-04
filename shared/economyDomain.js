@@ -111,6 +111,34 @@ export function normalizeSnapshotOrigin(origin, month) {
   return snapshotOriginForMonth(month)
 }
 
+export function isPrincipalBaseline(snapshot, previousSnapshot) {
+  return snapshot.month <= baselineMonth || !previousSnapshot
+}
+
+export function resolveSnapshotPrincipals(snapshot, previousSnapshot, tradeRepublicFacts = {}) {
+  if (isPrincipalBaseline(snapshot, previousSnapshot)) {
+    return {
+      tradeRepublicEquityPrincipal: snapshot.tradeRepublicEquityPrincipal ?? snapshot.tradeRepublicEquityValue ?? 0,
+      tradeRepublicCryptoPrincipal: snapshot.tradeRepublicCryptoPrincipal ?? snapshot.tradeRepublicCryptoValue ?? 0,
+      myInvestorEquityPrincipal: snapshot.myInvestorEquityPrincipal ?? snapshot.myInvestorEquityValue ?? 0,
+      myInvestorCryptoPrincipal: snapshot.myInvestorCryptoPrincipal ?? snapshot.myInvestorCryptoValue ?? 0,
+      urbanitaeRealEstatePrincipal: snapshot.urbanitaeRealEstatePrincipal ?? snapshot.urbanitaeRealEstateValue ?? 0,
+    }
+  }
+
+  return {
+    tradeRepublicEquityPrincipal: flowAdjustedPrincipal(previousSnapshot.tradeRepublicEquityPrincipal, previousSnapshot.tradeRepublicEquityValue, tradeRepublicFacts.tradeRepublicEquityFlow),
+    tradeRepublicCryptoPrincipal: flowAdjustedPrincipal(previousSnapshot.tradeRepublicCryptoPrincipal, previousSnapshot.tradeRepublicCryptoValue, tradeRepublicFacts.tradeRepublicCryptoFlow),
+    myInvestorEquityPrincipal: flowAdjustedPrincipal(previousSnapshot.myInvestorEquityPrincipal, previousSnapshot.myInvestorEquityValue, snapshot.myInvestorEquityExternalFlow ?? snapshot.myInvestorExternalFlow ?? 0),
+    myInvestorCryptoPrincipal: flowAdjustedPrincipal(previousSnapshot.myInvestorCryptoPrincipal, previousSnapshot.myInvestorCryptoValue, snapshot.myInvestorCryptoExternalFlow ?? 0),
+    urbanitaeRealEstatePrincipal: flowAdjustedPrincipal(previousSnapshot.urbanitaeRealEstatePrincipal, previousSnapshot.urbanitaeRealEstateValue, snapshot.urbanitaeExternalFlow ?? 0),
+  }
+}
+
+function flowAdjustedPrincipal(previousPrincipal, previousValue, flow = 0) {
+  return Math.max(0, (previousPrincipal ?? previousValue ?? 0) + flow)
+}
+
 export function myInvestorExternalFlow(snapshot) {
   return (snapshot.myInvestorEquityExternalFlow ?? snapshot.myInvestorExternalFlow ?? 0)
     + (snapshot.myInvestorFixedIncomeExternalFlow ?? 0)

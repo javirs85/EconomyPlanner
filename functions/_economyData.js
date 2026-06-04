@@ -3,6 +3,7 @@ import {
   classifyTradeRepublicTransactions,
   netAmount,
   normalizeSnapshotOrigin,
+  resolveSnapshotPrincipals,
 } from '../shared/economyDomain.js'
 
 const investmentTypes = new Set([
@@ -151,10 +152,18 @@ function calculateTradeRepublicFacts(data, periodStart, periodEnd) {
   return classifyTradeRepublicTransactions(transactionsBetween(data, periodStart, periodEnd), periodStart, periodEnd)
 }
 
+function getPreviousMonthlySnapshot(data, month) {
+  return [...data.monthlySnapshots]
+    .filter((snapshot) => snapshot.month < month)
+    .sort((left, right) => right.month.localeCompare(left.month))
+    .at(0)
+}
+
 export function getMonthlyClosing(data, { month, periodStart, periodEnd }) {
   const tradeRepublicFacts = calculateTradeRepublicFacts(data, periodStart, periodEnd)
   return {
     snapshot: data.monthlySnapshots.find((snapshot) => snapshot.month === month),
+    previousSnapshot: getPreviousMonthlySnapshot(data, month),
     tradeRepublicExternalFlow: tradeRepublicFacts.tradeRepublicCashContribution,
     tradeRepublicFacts,
     csvCoverage: getCsvCoverage(data, periodStart, periodEnd),
@@ -166,11 +175,12 @@ export function saveMonthlyClosing(data, snapshot) {
   const existing = data.monthlySnapshots.find((candidate) => candidate.month === snapshot.month)
   const tradeRepublicFacts = calculateTradeRepublicFacts(data, snapshot.periodStart, snapshot.periodEnd)
   const generatedCash = tradeRepublicFacts.generatedCash
-  const tradeRepublicEquityPrincipal = snapshot.tradeRepublicEquityPrincipal ?? snapshot.tradeRepublicEquityValue ?? 0
-  const tradeRepublicCryptoPrincipal = snapshot.tradeRepublicCryptoPrincipal ?? snapshot.tradeRepublicCryptoValue ?? 0
-  const myInvestorEquityPrincipal = snapshot.myInvestorEquityPrincipal ?? snapshot.myInvestorEquityValue ?? 0
-  const myInvestorCryptoPrincipal = snapshot.myInvestorCryptoPrincipal ?? snapshot.myInvestorCryptoValue ?? 0
-  const urbanitaeRealEstatePrincipal = snapshot.urbanitaeRealEstatePrincipal ?? snapshot.urbanitaeRealEstateValue ?? 0
+  const principals = resolveSnapshotPrincipals(snapshot, getPreviousMonthlySnapshot(data, snapshot.month), tradeRepublicFacts)
+  const tradeRepublicEquityPrincipal = principals.tradeRepublicEquityPrincipal
+  const tradeRepublicCryptoPrincipal = principals.tradeRepublicCryptoPrincipal
+  const myInvestorEquityPrincipal = principals.myInvestorEquityPrincipal
+  const myInvestorCryptoPrincipal = principals.myInvestorCryptoPrincipal
+  const urbanitaeRealEstatePrincipal = principals.urbanitaeRealEstatePrincipal
   const nextSnapshot = {
     ...snapshot,
     schemaVersion: 2,
