@@ -19,6 +19,7 @@ Build settings:
 
 - Build command: `npm run build`
 - Build output directory: `dist`
+- Deploy command: leave empty when deploying from the Cloudflare Pages GitHub integration
 - Production branch: `main`
 
 R2 binding:
