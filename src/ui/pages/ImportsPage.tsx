@@ -77,8 +77,8 @@ function transactionLabel(type?: string) {
     DIVIDEND: 'Dividendo',
     DIVIDEND_PAYMENT: 'Dividendo',
     FINAL_MATURITY: 'Vencimiento',
-    INTEREST_PAYMENT: 'Interés',
-    MIGRATION: 'Migración',
+    INTEREST_PAYMENT: 'Interes',
+    MIGRATION: 'Migracion',
     SELL: 'Venta',
     STOCKPERK: 'Stockperk',
     TAX_OPTIMIZATION: 'Ajuste fiscal',
@@ -92,7 +92,7 @@ const flowLabels: Record<string, string> = {
   externalIncome: 'Entradas externas',
   cardExpenses: 'Gasto cotidiano',
   invested: 'Invertido',
-  investmentSales: 'Ventas de inversión',
+  investmentSales: 'Ventas de inversion',
   investmentIncome: 'Rendimientos recibidos',
   bondMaturities: 'Vencimientos de bonos',
 }
@@ -100,9 +100,9 @@ const flowLabels: Record<string, string> = {
 const presetLabels: Record<string, string> = {
   month: 'Este mes',
   previous: 'Mes anterior',
-  '30days': 'Últimos 30 días',
+  '30days': 'Ultimos 30 dias',
   ytd: 'YTD',
-  previousYear: 'Año anterior',
+  previousYear: 'Ano anterior',
 }
 
 function MetricBar({ active, flow, label, value, max, tone, onClick }: {
@@ -201,52 +201,53 @@ export function ImportsPage() {
 
   const maxFlow = Math.max(metrics.externalIncome, metrics.cardExpenses, metrics.invested, metrics.investmentSales, metrics.investmentIncome, metrics.bondMaturities)
   const hasDateFilter = activePreset !== 'all'
-  const dateFilterLabel = activePreset ? presetLabels[activePreset] : `${formatDate(from)} → ${formatDate(to)}`
+  const dateFilterLabel = activePreset ? presetLabels[activePreset] : `${formatDate(from)} -> ${formatDate(to)}`
   const hasActiveFilters = hasDateFilter || investmentsOnly || flow
+  const tradeRepublicImportPanel = (
+    <div className="trade-republic-import">
+      <div>
+        <p className="eyebrow">CSV Trade Republic</p>
+        <h2>{latestDate ? `${formatDate(latestDate)} -> hoy` : 'Elige cualquier fecha inicial'}</h2>
+        <p>{latestDate ? 'Repetir el ultimo dia es seguro: los duplicados se ignoran.' : 'Todavia no hay movimientos almacenados.'}</p>
+        <div className="coverage-inputs">
+          <label>Desde<input type="date" value={coverageStart} onChange={(event) => setCoverageStart(event.target.value)} /></label>
+          <label>Hasta<input type="date" value={coverageEnd} onChange={(event) => setCoverageEnd(event.target.value)} /></label>
+        </div>
+      </div>
+      <div
+        className={`compact-dropzone ${dragging ? 'dragging' : ''}`}
+        onDragEnter={(event) => { event.preventDefault(); setDragging(true) }}
+        onDragOver={(event) => event.preventDefault()}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(event) => { event.preventDefault(); setDragging(false); void consumeFile(event.dataTransfer.files[0]) }}
+      >
+        <input accept=".csv,text/csv" onChange={(event) => void consumeFile(event.target.files?.[0])} ref={inputRef} type="file" />
+        <span>CSV</span><div><strong>{loading ? 'Procesando CSV...' : 'Arrastra el CSV aqui'}</strong><small>o elige el archivo manualmente</small></div>
+        <button className="secondary-button" disabled={loading} onClick={() => inputRef.current?.click()} type="button">Elegir CSV</button>
+      </div>
+    </div>
+  )
 
   return (
     <>
       <header className="page-header">
-        <div><p className="eyebrow">Trade Republic</p><h1>Movimientos importados</h1><p>Revisa el historial y entiende qué ha ocurrido en cada periodo.</p></div>
+        <div><p className="eyebrow">Trade Republic</p><h1>Movimientos importados</h1><p>Revisa el historial y entiende que ha ocurrido en cada periodo.</p></div>
       </header>
 
       <ClosingCalendar onSelect={setSelectedClosingMonth} refreshKey={closingRefresh} selectedMonth={selectedClosingMonth} />
-      <MonthlyClosingPanel month={selectedClosingMonth} onSaved={() => setClosingRefresh((current) => current + 1)} refreshKey={closingRefresh} />
-
-      <section className="panel import-strip">
-        <div>
-          <p className="eyebrow">Próxima exportación recomendada</p>
-          <h2>{latestDate ? `${formatDate(latestDate)} → hoy` : 'Elige cualquier fecha inicial'}</h2>
-          <p>{latestDate ? 'Repetir el último día es seguro: los duplicados se ignoran.' : 'Todavía no hay movimientos almacenados.'}</p>
-          <div className="coverage-inputs">
-            <label>Desde<input type="date" value={coverageStart} onChange={(event) => setCoverageStart(event.target.value)} /></label>
-            <label>Hasta<input type="date" value={coverageEnd} onChange={(event) => setCoverageEnd(event.target.value)} /></label>
-          </div>
-        </div>
-        <div
-          className={`compact-dropzone ${dragging ? 'dragging' : ''}`}
-          onDragEnter={(event) => { event.preventDefault(); setDragging(true) }}
-          onDragOver={(event) => event.preventDefault()}
-          onDragLeave={() => setDragging(false)}
-          onDrop={(event) => { event.preventDefault(); setDragging(false); void consumeFile(event.dataTransfer.files[0]) }}
-        >
-          <input accept=".csv,text/csv" onChange={(event) => void consumeFile(event.target.files?.[0])} ref={inputRef} type="file" />
-          <span>⇣</span><div><strong>{loading ? 'Procesando CSV…' : 'Arrastra el CSV aquí'}</strong><small>o elige el archivo manualmente</small></div>
-          <button className="secondary-button" disabled={loading} onClick={() => inputRef.current?.click()}>Elegir CSV</button>
-        </div>
-      </section>
+      <MonthlyClosingPanel month={selectedClosingMonth} onSaved={() => setClosingRefresh((current) => current + 1)} refreshKey={closingRefresh} tradeRepublicImport={tradeRepublicImportPanel} />
 
       {error && <p className="import-error">{error}</p>}
-      {batch && <p className="batch-notice">Importación completada: {batch.summary.insertedCount} nuevas y {batch.summary.duplicateCount} duplicadas. Guardado en SQLite local.</p>}
+      {batch && <p className="batch-notice">Importacion completada: {batch.summary.insertedCount} nuevas y {batch.summary.duplicateCount} duplicadas.</p>}
 
       <section className="panel explorer-filters">
         <div className="preset-row">
           {[
             ['month', 'Este mes'],
             ['previous', 'Mes anterior'],
-            ['30days', 'Últimos 30 días'],
+            ['30days', 'Ultimos 30 dias'],
             ['ytd', 'YTD'],
-            ['previousYear', 'Año anterior'],
+            ['previousYear', 'Ano anterior'],
             ['all', 'Todo'],
           ].map(([value, label]) => <button className={activePreset === value ? 'active' : ''} key={value} onClick={() => applyPreset(value)}>{label}</button>)}
         </div>
@@ -254,7 +255,7 @@ export function ImportsPage() {
           <label>Desde<input type="date" value={from} onChange={(event) => { setActivePreset(''); setFrom(event.target.value) }} /></label>
           <label>Hasta<input type="date" value={to} onChange={(event) => { setActivePreset(''); setTo(event.target.value) }} /></label>
           <button className={`investment-toggle ${investmentsOnly ? 'active' : ''}`} onClick={() => setInvestmentsOnly((current) => !current)}>
-            {investmentsOnly ? '✓ ' : ''}Solo inversiones
+            {investmentsOnly ? 'OK ' : ''}Solo inversiones
           </button>
         </div>
       </section>
@@ -263,47 +264,47 @@ export function ImportsPage() {
         <article className="panel movements-panel">
           <div className="movements-heading">
             <div>
-              <p className="eyebrow">Selección actual</p>
+              <p className="eyebrow">Seleccion actual</p>
               <h2>{metrics.movementCount} movimientos</h2>
               {hasActiveFilters && (
                 <div className="table-active-filters">
                   <span>Filtrado por</span>
-                  {hasDateFilter && <button onClick={() => applyPreset('all')}>{dateFilterLabel} ×</button>}
-                  {investmentsOnly && <button onClick={() => setInvestmentsOnly(false)}>Solo inversiones ×</button>}
-                  {flow && <button onClick={() => setFlow(undefined)}>{flowLabels[flow]} ×</button>}
+                  {hasDateFilter && <button onClick={() => applyPreset('all')}>{dateFilterLabel} x</button>}
+                  {investmentsOnly && <button onClick={() => setInvestmentsOnly(false)}>Solo inversiones x</button>}
+                  {flow && <button onClick={() => setFlow(undefined)}>{flowLabels[flow]} x</button>}
                   <button className="clear-filters" onClick={() => { applyPreset('all'); setInvestmentsOnly(false); setFlow(undefined) }}>Limpiar</button>
                 </div>
               )}
             </div>
-            <small>{formatDate(from)} → {formatDate(to)}</small>
+            <small>{formatDate(from)} {'->'} {formatDate(to)}</small>
           </div>
           <div className="movements-table-wrap">
             <table className="movements-table">
-              <thead><tr><th>Fecha</th><th>Tipo</th><th>Descripción</th><th>Activo</th><th>Importe</th></tr></thead>
+              <thead><tr><th>Fecha</th><th>Tipo</th><th>Descripcion</th><th>Activo</th><th>Importe</th></tr></thead>
               <tbody>
                 {transactions.map((transaction) => (
                   <tr className={selected?.transactionId === transaction.transactionId ? 'selected' : ''} key={transaction.transactionId} onClick={() => setSelected(transaction)}>
                     <td>{formatDate(transaction.date)}</td>
                     <td><span className={`movement-chip ${transactionTone(transaction)}`}>{transactionLabel(transaction.type)}</span></td>
-                    <td>{transaction.name || transaction.description || '—'}</td>
-                    <td>{transaction.symbol || transaction.assetClass || '—'}</td>
-                    <td className={(transaction.amount ?? 0) > 0 ? 'amount-positive' : ''}>{transaction.amount === undefined ? '—' : formatMoney(transaction.amount)}</td>
+                    <td>{transaction.name || transaction.description || '-'}</td>
+                    <td>{transaction.symbol || transaction.assetClass || '-'}</td>
+                    <td className={(transaction.amount ?? 0) > 0 ? 'amount-positive' : ''}>{transaction.amount === undefined ? '-' : formatMoney(transaction.amount)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            {transactions.length === 0 && <p className="empty-state">No hay movimientos para esta selección.</p>}
+            {transactions.length === 0 && <p className="empty-state">No hay movimientos para esta seleccion.</p>}
           </div>
         </article>
 
         <aside className="explorer-side">
           <article className="panel flow-panel">
-            <p className="eyebrow">Flujos de la selección</p><h2>Qué ha pasado</h2>
+            <p className="eyebrow">Flujos de la seleccion</p><h2>Que ha pasado</h2>
             <div className="flow-list">
               <MetricBar active={flow === 'externalIncome'} flow="externalIncome" label="Entradas externas" value={metrics.externalIncome} max={maxFlow} tone="income" onClick={(selectedFlow) => setFlow(flow === selectedFlow ? undefined : selectedFlow)} />
               <MetricBar active={flow === 'cardExpenses'} flow="cardExpenses" label="Gasto cotidiano" value={metrics.cardExpenses} max={maxFlow} tone="expense" onClick={(selectedFlow) => setFlow(flow === selectedFlow ? undefined : selectedFlow)} />
               <MetricBar active={flow === 'invested'} flow="invested" label="Invertido" value={metrics.invested} max={maxFlow} tone="investment" onClick={(selectedFlow) => setFlow(flow === selectedFlow ? undefined : selectedFlow)} />
-              <MetricBar active={flow === 'investmentSales'} flow="investmentSales" label="Ventas de inversión" value={metrics.investmentSales} max={maxFlow} tone="technical" onClick={(selectedFlow) => setFlow(flow === selectedFlow ? undefined : selectedFlow)} />
+              <MetricBar active={flow === 'investmentSales'} flow="investmentSales" label="Ventas de inversion" value={metrics.investmentSales} max={maxFlow} tone="technical" onClick={(selectedFlow) => setFlow(flow === selectedFlow ? undefined : selectedFlow)} />
               <MetricBar active={flow === 'investmentIncome'} flow="investmentIncome" label="Rendimientos recibidos" value={metrics.investmentIncome} max={maxFlow} tone="yield" onClick={(selectedFlow) => setFlow(flow === selectedFlow ? undefined : selectedFlow)} />
               <MetricBar active={flow === 'bondMaturities'} flow="bondMaturities" label="Vencimientos de bonos" value={metrics.bondMaturities} max={maxFlow} tone="maturity" onClick={(selectedFlow) => setFlow(flow === selectedFlow ? undefined : selectedFlow)} />
             </div>
@@ -312,7 +313,7 @@ export function ImportsPage() {
 
           {selected && (
             <article className="panel raw-panel">
-              <div className="raw-heading"><div><p className="eyebrow">Detalle del movimiento</p><h2>{transactionLabel(selected.type)}</h2></div><button onClick={() => setSelected(undefined)}>×</button></div>
+              <div className="raw-heading"><div><p className="eyebrow">Detalle del movimiento</p><h2>{transactionLabel(selected.type)}</h2></div><button onClick={() => setSelected(undefined)}>x</button></div>
               <dl>{Object.entries(selected.raw).filter(([, value]) => value).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl>
             </article>
           )}

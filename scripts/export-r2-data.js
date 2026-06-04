@@ -55,6 +55,9 @@ function readMonthlySnapshots() {
     myInvestorCryptoValue: row.my_investor_crypto_value,
     criptanCryptoValue: row.criptan_crypto_value ?? 0,
     myInvestorExternalFlow: row.my_investor_external_flow,
+    myInvestorEquityExternalFlow: row.my_investor_equity_external_flow ?? row.my_investor_external_flow,
+    myInvestorFixedIncomeExternalFlow: row.my_investor_fixed_income_external_flow ?? 0,
+    myInvestorCryptoExternalFlow: row.my_investor_crypto_external_flow ?? 0,
     criptanExternalFlow: row.criptan_external_flow ?? 0,
     urbanitaeRealEstateValue: row.urbanitae_real_estate_value ?? 0,
     urbanitaeExternalFlow: row.urbanitae_external_flow ?? 0,
@@ -97,4 +100,3 @@ console.log(JSON.stringify({
   importBatches: data.importBatches.length,
   monthlySnapshots: data.monthlySnapshots.length,
 }, null, 2))
-

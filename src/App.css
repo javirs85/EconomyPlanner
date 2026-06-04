@@ -137,6 +137,7 @@ h2 { color: #263a33; font: 600 23px/1.15 'Fraunces', serif; margin: 0 0 7px; }
 .import-money-grid span { color: #7b8983; font-size: 11px; }
 .import-money-grid strong { color: #42534d; font-size: 11px; }
 .import-strip { display: flex; align-items: center; justify-content: space-between; gap: 25px; margin-top: 27px; padding: 16px 18px; background: #f1f7f2; border-color: #dce9df; }
+.monthly-closing + .import-strip { display: none; }
 .import-strip h2 { font-size: 18px; margin-bottom: 3px; }
 .import-strip p:not(.eyebrow) { color: #7b8983; font-size: 11px; margin-bottom: 0; }
 .coverage-inputs { display: flex; gap: 7px; margin-top: 9px; }
@@ -151,6 +152,10 @@ h2 { color: #263a33; font: 600 23px/1.15 'Fraunces', serif; margin: 0 0 7px; }
 .compact-dropzone strong { color: #416057; font-size: 12px; }
 .compact-dropzone small { color: #87968f; font-size: 10px; margin-top: 2px; }
 .compact-dropzone .secondary-button { padding: 8px 11px; font-size: 11px; }
+.trade-republic-import { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 10px; padding: 11px 12px; border: 1px dashed #c6d9d0; border-radius: 8px; background: #f1f7f2; }
+.trade-republic-import h2 { font-size: 16px; margin-bottom: 2px; }
+.trade-republic-import p:not(.eyebrow) { color: #7b8983; font-size: 11px; margin-bottom: 0; }
+.trade-republic-import .compact-dropzone { min-width: 360px; }
 .batch-notice { margin: 10px 2px 0; color: #39745e; font-size: 11px; font-weight: 700; }
 .closing-calendar { margin-top: 27px; padding: 16px 18px 13px; }
 .calendar-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
@@ -185,7 +190,13 @@ h2 { color: #263a33; font: 600 23px/1.15 'Fraunces', serif; margin: 0 0 7px; }
 .closing-checklist .complete { color: #39745e; }.closing-checklist .complete b { background: #dff0e4; }
 .closing-checklist .partial { color: #98752e; }.closing-checklist .partial b { background: #fff0c7; }
 .closing-checklist .missing { color: #9a7474; }.closing-checklist .missing b { background: #faeaea; }
-.closing-form-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; margin-top: 17px; }
+.closing-form-stack { display: grid; gap: 12px; margin-top: 17px; }
+.closing-section { min-width: 0; margin: 0; padding: 11px; border: 1px solid #dfe9e4; border-radius: 8px; background: #fbfdfb; }
+.closing-section legend { padding: 0 5px; color: #47665b; font-size: 10px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; }
+.closing-form-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+.closing-section-caixa .closing-form-grid { grid-template-columns: minmax(0, 1fr); max-width: 250px; }
+.closing-section-myinvestor .closing-form-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.closing-section-otros .closing-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .balance-input { display: block; padding: 10px; border: 1px solid #e0e9e4; border-radius: 8px; background: #fff; }
 .balance-input span, .balance-input small { display: block; }
 .balance-input span, .detected-flow span, .closing-total span { color: #47665b; font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
@@ -205,7 +216,7 @@ h2 { color: #263a33; font: 600 23px/1.15 'Fraunces', serif; margin: 0 0 7px; }
 .cash-plan-grid b { color: #71817b; font-weight: 500; }.cash-plan-grid strong { color: #38564c; }
 .cash-plan-warning, .cash-plan-note { display: block; margin-top: 8px; font-size: 10px; }
 .cash-plan-warning { color: #a46666; }.cash-plan-note { color: #7b8983; }
-.closing-flow-row { display: grid; grid-template-columns: minmax(190px, 1.2fr) minmax(180px, 1fr) minmax(160px, .8fr) auto; align-items: stretch; gap: 9px; margin-top: 9px; }
+.closing-flow-row { display: grid; grid-template-columns: repeat(5, minmax(130px, 1fr)) minmax(140px, .9fr) minmax(150px, 1fr) auto; align-items: stretch; gap: 9px; margin-top: 9px; }
 .detected-flow, .closing-total { display: flex; flex-direction: column; justify-content: center; padding: 10px 12px; border: 1px solid #dce7e1; border-radius: 8px; background: #eff6f0; }
 .detected-flow strong, .closing-total strong { color: #34785c; font: 600 18px/1 'Fraunces', serif; margin-top: 6px; }
 .closing-total { background: #f0f4f2; }.closing-total strong { color: #38564c; }
@@ -289,6 +300,6 @@ h2 { color: #263a33; font: 600 23px/1.15 'Fraunces', serif; margin: 0 0 7px; }
 .dashboard-empty { margin-top: 30px; }
 .dashboard-empty .primary-button { margin-top: 12px; }
 @media (max-width: 1050px) { .metrics-grid { grid-template-columns: repeat(2, 1fr); }.chart-layout, .selected-analytics-grid { grid-template-columns: 1fr; }.selected-allocation-card { min-height: 0; }.selected-allocation-body { grid-template-columns: 1fr; }.selected-analytics-side { grid-template-columns: 1fr; }.selected-kpis-card { grid-template-columns: repeat(3, minmax(0, 1fr)); }.stack-legend { grid-template-columns: repeat(2, 1fr); padding: 14px 0 0; border-left: 0; border-top: 1px solid #edf0ed; } }
-@media (max-width: 1100px) { .closing-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }.closing-flow-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }.explorer-filters { display: block; }.manual-range { margin-top: 9px; }.explorer-layout { grid-template-columns: 1fr; }.explorer-side { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 1100px) { .closing-form-grid, .closing-section-myinvestor .closing-form-grid, .closing-section-otros .closing-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }.closing-flow-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }.trade-republic-import { display: block; }.trade-republic-import .compact-dropzone { min-width: 0; margin-top: 10px; }.explorer-filters { display: block; }.manual-range { margin-top: 9px; }.explorer-layout { grid-template-columns: 1fr; }.explorer-side { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 900px) { .month-strip { grid-template-columns: repeat(6, 1fr); }.import-grid { grid-template-columns: 1fr; }.import-money-grid { grid-template-columns: repeat(2, 1fr); }.import-strip { display: block; }.compact-dropzone { min-width: 0; margin-top: 12px; } }
 @media (max-width: 760px) { .app-shell { display: block; }.sidebar { padding: 14px; }.brand { padding-bottom: 10px; } nav { display: flex; overflow-x: auto; }.sidebar-foot { display: none; } main { padding: 25px 16px 30px; }.page-header { display: block; }.primary-button { margin-top: 16px; }.metrics-grid, .lower-grid, .closing-form-grid, .closing-flow-row, .migration-summary, .selected-kpis-card { grid-template-columns: 1fr; }.closing-heading { display: block; }.closing-heading-actions { justify-content: flex-start; margin-top: 10px; }.closing-flow-row .primary-button { margin-top: 0; }.chart-card { padding-inline: 13px; }.card-heading { display: block; }.text-button { margin-top: 6px; }.chart-area { height: 285px; }.selected-pie-wrap { width: min(100%, 270px); }.asset-legend-large button { grid-template-columns: 12px minmax(0, 1fr); }.asset-legend-large strong { text-align: left; }.import-stats { grid-template-columns: repeat(2, 1fr); }.import-money-grid { grid-template-columns: 1fr; }.manual-range { flex-wrap: wrap; }.explorer-side { grid-template-columns: 1fr; }.movements-table th:nth-child(3), .movements-table td:nth-child(3) { display: none; } }

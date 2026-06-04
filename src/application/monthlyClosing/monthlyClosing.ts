@@ -14,7 +14,10 @@ export interface MonthlySnapshot {
   myInvestorFixedIncomeValue: number
   myInvestorCryptoValue: number
   criptanCryptoValue: number
-  myInvestorExternalFlow: number
+  myInvestorExternalFlow?: number
+  myInvestorEquityExternalFlow: number
+  myInvestorFixedIncomeExternalFlow: number
+  myInvestorCryptoExternalFlow: number
   criptanExternalFlow: number
   urbanitaeRealEstateValue: number
   urbanitaeExternalFlow: number

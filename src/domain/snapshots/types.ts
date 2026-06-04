@@ -53,6 +53,9 @@ export interface IncomeBreakdown {
 
 export interface SavingsBreakdown {
   myInvestor: number
+  myInvestorEquity: number
+  myInvestorFixedIncome: number
+  myInvestorCrypto: number
   criptan: number
   urbanitae: number
   total: number

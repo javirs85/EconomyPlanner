@@ -167,6 +167,12 @@ function normalizeSnapshotOrigin(origin, month) {
   return snapshotOriginForMonth(month)
 }
 
+function myInvestorExternalFlow(snapshot) {
+  return (snapshot.myInvestorEquityExternalFlow ?? snapshot.myInvestorExternalFlow ?? 0)
+    + (snapshot.myInvestorFixedIncomeExternalFlow ?? 0)
+    + (snapshot.myInvestorCryptoExternalFlow ?? 0)
+}
+
 export function getMonthlyClosing(data, { month, periodStart, periodEnd }) {
   return {
     snapshot: data.monthlySnapshots.find((snapshot) => snapshot.month === month),
@@ -187,6 +193,12 @@ export function saveMonthlyClosing(data, snapshot) {
     reportedInterest: snapshot.reportedInterest ?? 0,
     reportedBondPayments: snapshot.reportedBondPayments ?? 0,
     reportedGeneratedCash: snapshot.reportedGeneratedCash ?? 0,
+    myInvestorEquityExternalFlow: snapshot.myInvestorEquityExternalFlow ?? snapshot.myInvestorExternalFlow ?? 0,
+    myInvestorFixedIncomeExternalFlow: snapshot.myInvestorFixedIncomeExternalFlow ?? 0,
+    myInvestorCryptoExternalFlow: snapshot.myInvestorCryptoExternalFlow ?? 0,
+    myInvestorExternalFlow: (snapshot.myInvestorEquityExternalFlow ?? snapshot.myInvestorExternalFlow ?? 0)
+      + (snapshot.myInvestorFixedIncomeExternalFlow ?? 0)
+      + (snapshot.myInvestorCryptoExternalFlow ?? 0),
     snapshotOrigin: normalizeSnapshotOrigin(snapshot.snapshotOrigin, snapshot.month),
   }
 
@@ -327,7 +339,7 @@ function attributeLiquidInvestments(data, snapshots) {
     }
 
     const flow = calculateTradeRepublicInvestmentFlow(data, snapshot.periodStart, snapshot.periodEnd)
-      + snapshot.myInvestorExternalFlow
+      + myInvestorExternalFlow(snapshot)
       + snapshot.criptanExternalFlow
     const expectedAfterFlow = Math.max(0, previous.value + flow)
     const principalAfterFlow = flow >= 0
@@ -447,7 +459,7 @@ export function getDashboard(data) {
   const previousNetWorth = previous ? snapshotNetWorth(previous) : undefined
   const monthlyChange = previousNetWorth === undefined ? undefined : currentNetWorth - previousNetWorth
   const tradeRepublicExternalFlow = calculateTradeRepublicExternalFlow(data, latest.periodStart, latest.periodEnd)
-  const netContribution = tradeRepublicExternalFlow + latest.myInvestorExternalFlow + latest.urbanitaeExternalFlow
+  const netContribution = tradeRepublicExternalFlow + myInvestorExternalFlow(latest) + latest.urbanitaeExternalFlow
   const detectedYields = calculateDetectedYields(data, latest.periodStart, latest.periodEnd)
 
   const monthLabels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
@@ -492,10 +504,13 @@ export function getDashboard(data) {
       assetBreakdown: snapshotAssetBreakdown(snapshot),
       incomeBreakdown: calculateIncomeBreakdown(data, snapshot),
       savingsBreakdown: {
-        myInvestor: snapshot.myInvestorExternalFlow,
+        myInvestor: myInvestorExternalFlow(snapshot),
+        myInvestorEquity: snapshot.myInvestorEquityExternalFlow ?? snapshot.myInvestorExternalFlow ?? 0,
+        myInvestorFixedIncome: snapshot.myInvestorFixedIncomeExternalFlow ?? 0,
+        myInvestorCrypto: snapshot.myInvestorCryptoExternalFlow ?? 0,
         criptan: snapshot.criptanExternalFlow,
         urbanitae: snapshot.urbanitaeExternalFlow,
-        total: snapshot.myInvestorExternalFlow + snapshot.criptanExternalFlow + snapshot.urbanitaeExternalFlow,
+        total: myInvestorExternalFlow(snapshot) + snapshot.criptanExternalFlow + snapshot.urbanitaeExternalFlow,
       },
     }
   })
@@ -525,4 +540,3 @@ export function getDashboard(data) {
     },
   }
 }
-

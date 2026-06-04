@@ -13,6 +13,11 @@ function normalizeSnapshot(snapshot) {
   return {
     ...snapshot,
     criptanCryptoValue: snapshot.criptanCryptoValue ?? 0,
+    myInvestorEquityExternalFlow: snapshot.myInvestorEquityExternalFlow ?? snapshot.myInvestorExternalFlow ?? 0,
+    myInvestorFixedIncomeExternalFlow: snapshot.myInvestorFixedIncomeExternalFlow ?? 0,
+    myInvestorCryptoExternalFlow: snapshot.myInvestorCryptoExternalFlow ?? 0,
+    myInvestorExternalFlow: snapshot.myInvestorExternalFlow
+      ?? (snapshot.myInvestorEquityExternalFlow ?? 0) + (snapshot.myInvestorFixedIncomeExternalFlow ?? 0) + (snapshot.myInvestorCryptoExternalFlow ?? 0),
     criptanExternalFlow: snapshot.criptanExternalFlow ?? 0,
     urbanitaeRealEstateValue: snapshot.urbanitaeRealEstateValue ?? 0,
     urbanitaeExternalFlow: snapshot.urbanitaeExternalFlow ?? 0,
@@ -50,4 +55,3 @@ export async function writeData(env, data) {
     httpMetadata: { contentType: 'application/json; charset=utf-8' },
   })
 }
-

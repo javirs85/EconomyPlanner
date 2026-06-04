@@ -47,6 +47,9 @@ database.exec(`
     my_investor_crypto_value REAL NOT NULL,
     criptan_crypto_value REAL NOT NULL DEFAULT 0,
     my_investor_external_flow REAL NOT NULL,
+    my_investor_equity_external_flow REAL NOT NULL DEFAULT 0,
+    my_investor_fixed_income_external_flow REAL NOT NULL DEFAULT 0,
+    my_investor_crypto_external_flow REAL NOT NULL DEFAULT 0,
     criptan_external_flow REAL NOT NULL DEFAULT 0,
     urbanitae_real_estate_value REAL NOT NULL DEFAULT 0,
     urbanitae_external_flow REAL NOT NULL DEFAULT 0,
@@ -96,6 +99,16 @@ if (!monthlySnapshotColumns.has('urbanitae_real_estate_value')) {
 }
 if (!monthlySnapshotColumns.has('criptan_external_flow')) {
   database.exec('ALTER TABLE monthly_snapshots ADD COLUMN criptan_external_flow REAL NOT NULL DEFAULT 0')
+}
+if (!monthlySnapshotColumns.has('my_investor_equity_external_flow')) {
+  database.exec('ALTER TABLE monthly_snapshots ADD COLUMN my_investor_equity_external_flow REAL NOT NULL DEFAULT 0')
+  database.exec('UPDATE monthly_snapshots SET my_investor_equity_external_flow = my_investor_external_flow')
+}
+if (!monthlySnapshotColumns.has('my_investor_fixed_income_external_flow')) {
+  database.exec('ALTER TABLE monthly_snapshots ADD COLUMN my_investor_fixed_income_external_flow REAL NOT NULL DEFAULT 0')
+}
+if (!monthlySnapshotColumns.has('my_investor_crypto_external_flow')) {
+  database.exec('ALTER TABLE monthly_snapshots ADD COLUMN my_investor_crypto_external_flow REAL NOT NULL DEFAULT 0')
 }
 if (!monthlySnapshotColumns.has('urbanitae_external_flow')) {
   database.exec('ALTER TABLE monthly_snapshots ADD COLUMN urbanitae_external_flow REAL NOT NULL DEFAULT 0')
@@ -373,6 +386,9 @@ function mapMonthlySnapshot(row) {
     myInvestorCryptoValue: row.my_investor_crypto_value,
     criptanCryptoValue: row.criptan_crypto_value,
     myInvestorExternalFlow: row.my_investor_external_flow,
+    myInvestorEquityExternalFlow: row.my_investor_equity_external_flow ?? row.my_investor_external_flow,
+    myInvestorFixedIncomeExternalFlow: row.my_investor_fixed_income_external_flow ?? 0,
+    myInvestorCryptoExternalFlow: row.my_investor_crypto_external_flow ?? 0,
     criptanExternalFlow: row.criptan_external_flow,
     urbanitaeRealEstateValue: row.urbanitae_real_estate_value,
     urbanitaeExternalFlow: row.urbanitae_external_flow,
@@ -410,6 +426,12 @@ function normalizeSnapshotOrigin(origin, month) {
   return snapshotOriginForMonth(month)
 }
 
+function myInvestorExternalFlow(snapshot) {
+  return (snapshot.myInvestorEquityExternalFlow ?? snapshot.myInvestorExternalFlow ?? 0)
+    + (snapshot.myInvestorFixedIncomeExternalFlow ?? 0)
+    + (snapshot.myInvestorCryptoExternalFlow ?? 0)
+}
+
 export function getMonthlyClosing({ month, periodStart, periodEnd }) {
   const snapshot = database.prepare(`
     SELECT * FROM monthly_snapshots WHERE month = ?
@@ -437,9 +459,10 @@ export function saveMonthlyClosing(snapshot) {
       trade_republic_equity_value, trade_republic_fixed_income_value,
       trade_republic_crypto_value, my_investor_equity_value,
       my_investor_fixed_income_value, my_investor_crypto_value, criptan_crypto_value,
-      my_investor_external_flow, criptan_external_flow, urbanitae_real_estate_value, urbanitae_external_flow,
+      my_investor_external_flow, my_investor_equity_external_flow, my_investor_fixed_income_external_flow,
+      my_investor_crypto_external_flow, criptan_external_flow, urbanitae_real_estate_value, urbanitae_external_flow,
       reported_interest, reported_bond_payments, reported_generated_cash, snapshot_origin
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(month) DO UPDATE SET
       period_start = excluded.period_start,
       period_end = excluded.period_end,
@@ -454,6 +477,9 @@ export function saveMonthlyClosing(snapshot) {
       my_investor_crypto_value = excluded.my_investor_crypto_value,
       criptan_crypto_value = excluded.criptan_crypto_value,
       my_investor_external_flow = excluded.my_investor_external_flow,
+      my_investor_equity_external_flow = excluded.my_investor_equity_external_flow,
+      my_investor_fixed_income_external_flow = excluded.my_investor_fixed_income_external_flow,
+      my_investor_crypto_external_flow = excluded.my_investor_crypto_external_flow,
       criptan_external_flow = excluded.criptan_external_flow,
       urbanitae_real_estate_value = excluded.urbanitae_real_estate_value,
       urbanitae_external_flow = excluded.urbanitae_external_flow,
@@ -477,7 +503,10 @@ export function saveMonthlyClosing(snapshot) {
     snapshot.myInvestorFixedIncomeValue,
     snapshot.myInvestorCryptoValue,
     snapshot.criptanCryptoValue,
-    snapshot.myInvestorExternalFlow,
+    myInvestorExternalFlow(snapshot),
+    snapshot.myInvestorEquityExternalFlow ?? snapshot.myInvestorExternalFlow ?? 0,
+    snapshot.myInvestorFixedIncomeExternalFlow ?? 0,
+    snapshot.myInvestorCryptoExternalFlow ?? 0,
     snapshot.criptanExternalFlow ?? 0,
     snapshot.urbanitaeRealEstateValue,
     snapshot.urbanitaeExternalFlow,
@@ -663,7 +692,7 @@ function attributeLiquidInvestments(snapshots) {
     }
 
     const flow = calculateTradeRepublicInvestmentFlow(snapshot.periodStart, snapshot.periodEnd)
-      + snapshot.myInvestorExternalFlow
+      + myInvestorExternalFlow(snapshot)
       + snapshot.criptanExternalFlow
     const expectedAfterFlow = Math.max(0, previous.value + flow)
     const principalAfterFlow = flow >= 0
@@ -785,7 +814,7 @@ export function getDashboard() {
   const previousNetWorth = previous ? snapshotNetWorth(previous) : undefined
   const monthlyChange = previousNetWorth === undefined ? undefined : currentNetWorth - previousNetWorth
   const tradeRepublicExternalFlow = calculateTradeRepublicExternalFlow(latest.periodStart, latest.periodEnd)
-  const netContribution = tradeRepublicExternalFlow + latest.myInvestorExternalFlow + latest.urbanitaeExternalFlow
+  const netContribution = tradeRepublicExternalFlow + myInvestorExternalFlow(latest) + latest.urbanitaeExternalFlow
   const detectedYields = calculateDetectedYields(latest.periodStart, latest.periodEnd)
 
   const monthLabels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
@@ -830,10 +859,13 @@ export function getDashboard() {
       assetBreakdown: snapshotAssetBreakdown(snapshot),
       incomeBreakdown: calculateIncomeBreakdown(snapshot),
       savingsBreakdown: {
-        myInvestor: snapshot.myInvestorExternalFlow,
+        myInvestor: myInvestorExternalFlow(snapshot),
+        myInvestorEquity: snapshot.myInvestorEquityExternalFlow ?? snapshot.myInvestorExternalFlow ?? 0,
+        myInvestorFixedIncome: snapshot.myInvestorFixedIncomeExternalFlow ?? 0,
+        myInvestorCrypto: snapshot.myInvestorCryptoExternalFlow ?? 0,
         criptan: snapshot.criptanExternalFlow,
         urbanitae: snapshot.urbanitaeExternalFlow,
-        total: snapshot.myInvestorExternalFlow + snapshot.criptanExternalFlow + snapshot.urbanitaeExternalFlow,
+        total: myInvestorExternalFlow(snapshot) + snapshot.criptanExternalFlow + snapshot.urbanitaeExternalFlow,
       },
     }
   })
