@@ -138,6 +138,7 @@ export function ImportsPage() {
   const [dragging, setDragging] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>()
+  const [importMessage, setImportMessage] = useState<string>()
   const [closingRefresh, setClosingRefresh] = useState(0)
   const [selectedClosingMonth, setSelectedClosingMonth] = useState(() => {
     const today = new Date()
@@ -178,13 +179,21 @@ export function ImportsPage() {
   }
 
   async function consumeFile(file?: File) {
-    if (!file) return
+    if (!file) {
+      setImportMessage(undefined)
+      setError('No se ha recibido ningun archivo.')
+      return
+    }
     setLoading(true)
     setError(undefined)
+    setBatch(undefined)
+    setImportMessage(`Preparando ${file.name}...`)
     try {
       if (!coverageStart || !coverageEnd) throw new Error('Indica el rango solicitado a Trade Republic antes de importar.')
+      setImportMessage(`Importando ${file.name}...`)
       const importedBatch = await importTradeRepublicCsv(file, coverageStart, coverageEnd)
       setBatch(importedBatch)
+      setImportMessage(undefined)
       const latestImportedDate = await getLatestImportedTransactionDate()
       setLatestDate(latestImportedDate)
       if (latestImportedDate) setCoverageStart(latestImportedDate)
@@ -193,6 +202,7 @@ export function ImportsPage() {
       setTransactions(result.transactions)
       setMetrics(result.metrics)
     } catch (caught) {
+      setImportMessage(undefined)
       setError(caught instanceof Error ? caught.message : 'No se pudo importar el CSV.')
     } finally {
       setLoading(false)
@@ -231,9 +241,10 @@ export function ImportsPage() {
           ref={inputRef}
           type="file"
         />
-        <span>CSV</span><div><strong>{loading ? 'Procesando CSV...' : 'Arrastra el CSV aqui'}</strong><small>o elige el archivo manualmente</small></div>
+        <span>CSV</span><div><strong>{importMessage ?? (loading ? 'Procesando CSV...' : 'Arrastra el CSV aqui')}</strong><small>o elige el archivo manualmente</small></div>
         <button className="secondary-button" disabled={loading} onClick={() => inputRef.current?.click()} type="button">Elegir CSV</button>
       </div>
+      {importMessage && <p className="batch-notice inline-import-notice">{importMessage}</p>}
       {error && <p className="import-error inline-import-error">{error}</p>}
       {batch && <p className="batch-notice inline-import-notice">Importacion completada: {batch.summary.insertedCount} nuevas y {batch.summary.duplicateCount} duplicadas.</p>}
     </div>

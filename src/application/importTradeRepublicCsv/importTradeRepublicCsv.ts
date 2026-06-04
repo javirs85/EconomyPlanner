@@ -11,6 +11,23 @@ export async function getLatestImportedTransactionDate() {
   return status.latestTransactionDate
 }
 
+async function readJsonResponse<T extends object>(response: Response, fallbackMessage: string) {
+  const text = await response.text()
+  let result: T | { error: string }
+
+  try {
+    result = JSON.parse(text) as T | { error: string }
+  } catch {
+    throw new Error(text.trim() || fallbackMessage)
+  }
+
+  if (!response.ok || 'error' in result) {
+    throw new Error('error' in result ? result.error : fallbackMessage)
+  }
+
+  return result
+}
+
 export async function importTradeRepublicCsv(file: File, coverageStart: string, coverageEnd: string) {
   const response = await fetch('/api/trade-republic/import', {
     method: 'POST',
@@ -23,12 +40,7 @@ export async function importTradeRepublicCsv(file: File, coverageStart: string, 
     }),
   })
 
-  const result = await response.json() as ImportBatch | { error: string }
-  if (!response.ok || 'error' in result) {
-    throw new Error('error' in result ? result.error : 'No se pudo importar el CSV.')
-  }
-
-  return result
+  return await readJsonResponse<ImportBatch>(response, 'No se pudo importar el CSV.')
 }
 
 export async function exploreTradeRepublicTransactions({
@@ -49,7 +61,6 @@ export async function exploreTradeRepublicTransactions({
   })
   if (flow) query.set('flow', flow)
   const response = await fetch(`/api/trade-republic/transactions?${query}`)
-  if (!response.ok) throw new Error('No se pudieron consultar los movimientos.')
 
-  return await response.json() as TransactionExplorerResult
+  return await readJsonResponse<TransactionExplorerResult>(response, 'No se pudieron consultar los movimientos.')
 }
