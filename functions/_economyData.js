@@ -333,9 +333,7 @@ function attributeLiquidInvestments(data, snapshots) {
   return snapshots.map((snapshot) => {
     const value = liquidInvestmentValue(snapshot)
     if (!previous || snapshot.snapshotOrigin === 'historical-migration') {
-      const attributed = snapshot.snapshotOrigin === 'historical-visual'
-        ? { principal: value * 0.9, growth: value * 0.1, value }
-        : { principal: value, growth: 0, value }
+      const attributed = { principal: value * 0.9, growth: value * 0.1, value }
       previous = attributed
       return attributed
     }
@@ -450,13 +448,6 @@ function passiveIncome(snapshot) {
   return snapshot.reportedInterest + snapshot.reportedBondPayments
 }
 
-function passiveIncomeFromBreakdown(incomeBreakdown, snapshot) {
-  if (incomeBreakdown.source !== 'csv') return passiveIncome(snapshot)
-  return incomeBreakdown.items
-    .filter((item) => item.key === 'interestPayments' || item.key === 'bondMaturities')
-    .reduce((sum, item) => sum + item.value, 0)
-}
-
 export function getDashboard(data) {
   const snapshots = [...data.monthlySnapshots].sort((left, right) => left.month.localeCompare(right.month))
 
@@ -480,17 +471,15 @@ export function getDashboard(data) {
     const snapshotTotalNetWorth = snapshotNetWorth(snapshot)
     const snapshotMonthlyChange = previousSnapshotNetWorth === undefined ? undefined : snapshotTotalNetWorth - previousSnapshotNetWorth
     const cash = snapshot.caixaBalance + snapshot.tradeRepublicCashBalance
-    const incomeBreakdown = calculateIncomeBreakdown(data, snapshot)
-    const generatedCash = incomeBreakdown.source === 'csv' ? incomeBreakdown.total : snapshot.reportedGeneratedCash
-    const cashFromYields = Math.min(cash, generatedCash)
+    const cashFromYields = Math.min(cash, snapshot.reportedGeneratedCash)
     const investments = attributedNonFixedInvestmentFromSnapshot(snapshot, attributedLiquidInvestmentFromSnapshot(snapshot, investmentAttribution[index]))
     const fixedIncome = fixedIncomeValue(snapshot)
     const marketGrowthValue = marketGrowth(snapshot)
     const marketChange = marketChangeForSnapshot(snapshot, previousReliableSnapshot)
-    const passiveIncomeValue = passiveIncomeFromBreakdown(incomeBreakdown, snapshot)
+    const passiveIncomeValue = passiveIncome(snapshot)
     const passiveIncomeYtd = snapshots
       .filter((candidate) => candidate.month.slice(0, 4) === snapshot.month.slice(0, 4) && candidate.month <= snapshot.month)
-      .reduce((sum, candidate) => sum + passiveIncomeFromBreakdown(calculateIncomeBreakdown(data, candidate), candidate), 0)
+      .reduce((sum, candidate) => sum + passiveIncome(candidate), 0)
     if (snapshot.snapshotOrigin === 'baseline' || snapshot.snapshotOrigin === 'tracked') previousReliableSnapshot = snapshot
 
     return {
@@ -513,7 +502,7 @@ export function getDashboard(data) {
       passiveIncome: passiveIncomeValue,
       passiveIncomeYtd,
       assetBreakdown: snapshotAssetBreakdown(snapshot),
-      incomeBreakdown,
+      incomeBreakdown: calculateIncomeBreakdown(data, snapshot),
       savingsBreakdown: {
         myInvestor: myInvestorExternalFlow(snapshot),
         myInvestorEquity: snapshot.myInvestorEquityExternalFlow ?? snapshot.myInvestorExternalFlow ?? 0,
