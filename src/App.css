@@ -153,9 +153,11 @@ h2 { color: #263a33; font: 600 23px/1.15 'Fraunces', serif; margin: 0 0 7px; }
 .compact-dropzone small { color: #87968f; font-size: 10px; margin-top: 2px; }
 .compact-dropzone .secondary-button { padding: 8px 11px; font-size: 11px; }
 .trade-republic-import { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 10px; padding: 11px 12px; border: 1px dashed #c6d9d0; border-radius: 8px; background: #f1f7f2; }
+.trade-republic-import { flex-wrap: wrap; }
 .trade-republic-import h2 { font-size: 16px; margin-bottom: 2px; }
 .trade-republic-import p:not(.eyebrow) { color: #7b8983; font-size: 11px; margin-bottom: 0; }
 .trade-republic-import .compact-dropzone { min-width: 360px; }
+.inline-import-error, .inline-import-notice { flex-basis: 100%; margin: 0; }
 .batch-notice { margin: 10px 2px 0; color: #39745e; font-size: 11px; font-weight: 700; }
 .closing-calendar { margin-top: 27px; padding: 16px 18px 13px; }
 .calendar-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }

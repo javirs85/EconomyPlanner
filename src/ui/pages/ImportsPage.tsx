@@ -144,7 +144,7 @@ export function ImportsPage() {
     const target = new Date(today.getFullYear(), today.getMonth() - 1, 1)
     return `${target.getFullYear()}-${String(target.getMonth() + 1).padStart(2, '0')}`
   })
-  const [coverageStart, setCoverageStart] = useState('')
+  const [coverageStart, setCoverageStart] = useState(initialRange.from)
   const [coverageEnd, setCoverageEnd] = useState(() => isoDate(new Date()))
 
   useEffect(() => {
@@ -221,10 +221,21 @@ export function ImportsPage() {
         onDragLeave={() => setDragging(false)}
         onDrop={(event) => { event.preventDefault(); setDragging(false); void consumeFile(event.dataTransfer.files[0]) }}
       >
-        <input accept=".csv,text/csv" onChange={(event) => void consumeFile(event.target.files?.[0])} ref={inputRef} type="file" />
+        <input
+          accept=".csv,text/csv"
+          onChange={(event) => {
+            const file = event.target.files?.[0]
+            event.currentTarget.value = ''
+            void consumeFile(file)
+          }}
+          ref={inputRef}
+          type="file"
+        />
         <span>CSV</span><div><strong>{loading ? 'Procesando CSV...' : 'Arrastra el CSV aqui'}</strong><small>o elige el archivo manualmente</small></div>
         <button className="secondary-button" disabled={loading} onClick={() => inputRef.current?.click()} type="button">Elegir CSV</button>
       </div>
+      {error && <p className="import-error inline-import-error">{error}</p>}
+      {batch && <p className="batch-notice inline-import-notice">Importacion completada: {batch.summary.insertedCount} nuevas y {batch.summary.duplicateCount} duplicadas.</p>}
     </div>
   )
 
@@ -236,9 +247,6 @@ export function ImportsPage() {
 
       <ClosingCalendar onSelect={setSelectedClosingMonth} refreshKey={closingRefresh} selectedMonth={selectedClosingMonth} />
       <MonthlyClosingPanel month={selectedClosingMonth} onSaved={() => setClosingRefresh((current) => current + 1)} refreshKey={closingRefresh} tradeRepublicImport={tradeRepublicImportPanel} />
-
-      {error && <p className="import-error">{error}</p>}
-      {batch && <p className="batch-notice">Importacion completada: {batch.summary.insertedCount} nuevas y {batch.summary.duplicateCount} duplicadas.</p>}
 
       <section className="panel explorer-filters">
         <div className="preset-row">
