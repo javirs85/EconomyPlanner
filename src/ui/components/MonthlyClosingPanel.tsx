@@ -193,6 +193,7 @@ export function MonthlyClosingPanel({
       inputMode: 'decimal' as const,
       onBlur: () => resolveValue(field),
       onChange: (event: React.ChangeEvent<HTMLInputElement>) => setValue(field, event.target.value),
+      onFocus: (event: React.FocusEvent<HTMLInputElement>) => event.target.select(),
       onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => { if (event.key === 'Enter') resolveValue(field) },
       placeholder: '0',
       required: true,
