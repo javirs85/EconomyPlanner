@@ -8,6 +8,7 @@
     "dev:api": "node server/index.js",
     "dev:vite": "vite",
     "build": "vite build",
+    "export:r2": "node scripts/export-r2-data.js",
     "lint": "eslint .",
     "typecheck": "tsc -b",
     "preview": "vite preview"
