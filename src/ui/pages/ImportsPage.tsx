@@ -241,7 +241,7 @@ export function ImportsPage() {
           ref={inputRef}
           type="file"
         />
-        <span>CSV</span><div><strong>{importMessage ?? (loading ? 'Procesando CSV...' : 'Arrastra el CSV aqui')}</strong><small>o elige el archivo manualmente</small></div>
+        <span>CSV</span><div><strong>{importMessage ?? (loading ? 'Procesando CSV...' : 'Arrastra el CSV aqui')}</strong><small>o elige el archivo manualmente · v2</small></div>
         <button className="secondary-button" disabled={loading} onClick={() => inputRef.current?.click()} type="button">Elegir CSV</button>
       </div>
       {importMessage && <p className="batch-notice inline-import-notice">{importMessage}</p>}

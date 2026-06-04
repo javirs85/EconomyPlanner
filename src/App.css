@@ -218,11 +218,11 @@ h2 { color: #263a33; font: 600 23px/1.15 'Fraunces', serif; margin: 0 0 7px; }
 .cash-plan-grid b { color: #71817b; font-weight: 500; }.cash-plan-grid strong { color: #38564c; }
 .cash-plan-warning, .cash-plan-note { display: block; margin-top: 8px; font-size: 10px; }
 .cash-plan-warning { color: #a46666; }.cash-plan-note { color: #7b8983; }
-.closing-flow-row { display: grid; grid-template-columns: repeat(5, minmax(130px, 1fr)) minmax(140px, .9fr) minmax(150px, 1fr) auto; align-items: stretch; gap: 9px; margin-top: 9px; }
+.closing-flow-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); align-items: stretch; gap: 9px; margin-top: 9px; }
 .detected-flow, .closing-total { display: flex; flex-direction: column; justify-content: center; padding: 10px 12px; border: 1px solid #dce7e1; border-radius: 8px; background: #eff6f0; }
 .detected-flow strong, .closing-total strong { color: #34785c; font: 600 18px/1 'Fraunces', serif; margin-top: 6px; }
 .closing-total { background: #f0f4f2; }.closing-total strong { color: #38564c; }
-.closing-flow-row .primary-button { align-self: stretch; }
+.closing-flow-row .primary-button { min-height: 68px; align-self: stretch; }
 .monthly-closing.collapsed { padding-block: 15px; }
 .explorer-filters { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-top: 14px; padding: 13px 14px; }
 .preset-row { display: flex; flex-wrap: wrap; gap: 5px; }
