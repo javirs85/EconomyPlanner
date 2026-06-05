@@ -91,11 +91,15 @@ function PassiveIncomeCard({ month, value, ytd }: { month: string; value: number
   )
 }
 
-function CashGeneratedKpi({ value, ytd, total }: { value: number; ytd: number; total: number }) {
+function monthName(month: string) {
+  return new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date(`${month}-01T00:00:00`))
+}
+
+function GeneratedKpi({ month, tone, value, ytd, total }: { month: string; tone: 'green' | 'blue'; value: number; ytd: number; total: number }) {
   return (
-    <article className="cash-generated-kpi">
+    <article className={`generated-kpi ${tone}`}>
       <div>
-        <span>Este mes</span>
+        <span>{month}</span>
         <strong>{formatMoney(value)}</strong>
       </div>
       <div>
@@ -252,7 +256,13 @@ function Dashboard({ onOpenClosing }: { onOpenClosing: () => void }) {
   const latestMonth = formatMonth(summary.latestMonth)
   const hasComparison = summary.monthlyChange !== undefined && summary.monthlyChangePercent !== undefined
   const selectedSnapshot = snapshots.find((snapshot) => snapshot.periodEnd === selectedPeriodEnd) ?? snapshots.at(-1)!
+  const selectedMonthName = monthName(selectedSnapshot.month)
   const cashGeneratedTotal = snapshots.reduce((sum, snapshot) => sum + snapshot.cashFromYields, 0)
+  const selectedYear = selectedSnapshot.month.slice(0, 4)
+  const investedGeneratedMonth = selectedSnapshot.marketChange ?? selectedSnapshot.investedGrowth
+  const investedGeneratedYtd = snapshots
+    .filter((snapshot) => snapshot.month.slice(0, 4) === selectedYear && snapshot.month <= selectedSnapshot.month)
+    .reduce((sum, snapshot) => sum + (snapshot.marketChange ?? 0), 0) || selectedSnapshot.investedGrowth
 
   return (
     <>
@@ -280,7 +290,10 @@ function Dashboard({ onOpenClosing }: { onOpenClosing: () => void }) {
           </div>
           <div className="chart-side">
             <div className="stack-legend">{stackLegend.map((item) => <div className="legend-row" key={item.label}><span className="legend-swatch" style={{ backgroundColor: item.color }} /><div><strong>{item.label}</strong><small>{item.detail}</small></div></div>)}</div>
-            <CashGeneratedKpi value={selectedSnapshot.cashFromYields} ytd={selectedSnapshot.passiveIncomeYtd} total={cashGeneratedTotal} />
+            <div className="generated-kpi-stack">
+              <GeneratedKpi month={selectedMonthName} tone="green" value={investedGeneratedMonth} ytd={investedGeneratedYtd} total={selectedSnapshot.investedGrowth} />
+              <GeneratedKpi month={selectedMonthName} tone="blue" value={selectedSnapshot.cashFromYields} ytd={selectedSnapshot.passiveIncomeYtd} total={cashGeneratedTotal} />
+            </div>
           </div>
         </div>
       </section>
