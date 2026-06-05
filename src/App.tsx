@@ -45,6 +45,7 @@ const assetColors: Record<string, string> = {
 }
 
 const incomeColors: Record<string, string> = {
+  generatedCash: '#579074',
   investmentIncome: '#579074',
   interestPayments: '#579074',
   dividendPayments: '#78a98d',
@@ -246,10 +247,20 @@ function AssetPieCard({ snapshot }: { snapshot: MonthlyOriginStack }) {
 
 function IncomeRow({ item, max }: { item: IncomeBreakdownItem; max: number }) {
   const width = max ? item.value / max * 100 : 0
+  const itemLabel = item.label.toLowerCase()
+  const color = itemLabel.includes('bono') || itemLabel.includes('cupón')
+    ? incomeColors.bondMaturities
+    : itemLabel.includes('dividendo')
+      ? incomeColors.dividendPayments
+      : incomeColors.generatedCash
+
   return (
     <div className="income-row">
-      <div><span>{item.label}</span><strong>{formatMoney(item.value)}</strong></div>
-      <div className="income-track"><span style={{ width: `${width}%`, backgroundColor: incomeColors[item.key] }} /></div>
+      <div>
+        <span>{item.label}{item.date && <small>{new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'short' }).format(new Date(`${item.date}T00:00:00`))}</small>}{item.detail && <small>{item.detail}</small>}</span>
+        <strong>{formatMoney(item.value)}</strong>
+      </div>
+      <div className="income-track"><span style={{ width: `${width}%`, backgroundColor: color }} /></div>
     </div>
   )
 }
@@ -257,17 +268,10 @@ function IncomeRow({ item, max }: { item: IncomeBreakdownItem; max: number }) {
 function IncomeBreakdownCard({ snapshot }: { snapshot: MonthlyOriginStack }) {
   const items = snapshot.incomeBreakdown.items.filter((item) => item.value > 0)
   const max = Math.max(...items.map((item) => item.value), 0)
-  const sourceLabel = snapshot.incomeBreakdown.source === 'snapshot'
-    ? 'Guardado en snapshot'
-    : snapshot.incomeBreakdown.source === 'csv'
-      ? 'Detectado en CSV'
-      : 'Fallback manual'
 
   return (
     <article className="panel income-card">
-      <div className="card-heading compact"><div><p className="eyebrow">Recibido</p><h2>Desglose de pagos</h2></div><strong>{formatMoney(snapshot.incomeBreakdown.total)}</strong></div>
-      <div className="income-source">{sourceLabel} · {snapshot.incomeBreakdown.coverageStatus}</div>
-      <p className="income-note">La barra usa cash generado atribuido al cierre; aquí se muestran pagos recibidos por tipo.</p>
+      <div className="card-heading compact"><div><p className="eyebrow">Recibido</p><h2>Pagos recibidos</h2></div><strong>{formatMoney(snapshot.incomeBreakdown.total)}</strong></div>
       <div className="income-bars">
         {items.length > 0
           ? items.map((item) => <IncomeRow key={item.key} item={item} max={max} />)

@@ -20,6 +20,7 @@ export function classifyTradeRepublicTransactions(transactions, periodStart, per
     tradeRepublicFixedIncomeFlow: 0,
     tradeRepublicCryptoFlow: 0,
     generatedCash: 0,
+    generatedCashItems: [],
     cardExpenses: 0,
     ignoredOutbounds: [],
   }
@@ -35,6 +36,13 @@ export function classifyTradeRepublicTransactions(transactions, periodStart, per
 
     if (generatedCashTypes.has(type)) {
       facts.generatedCash += amount
+      facts.generatedCashItems.push({
+        key: transaction.transactionId ?? `${transaction.date}-${type}-${facts.generatedCashItems.length}`,
+        date: transaction.date,
+        label: generatedCashLabel(transaction),
+        detail: transaction.description ?? transaction.name ?? '',
+        value: amount,
+      })
       continue
     }
 
@@ -86,6 +94,14 @@ export function classifyTradeRepublicTransactions(transactions, periodStart, per
 
   facts.cardExpenses = Math.max(0, facts.cardExpenses)
   return facts
+}
+
+function generatedCashLabel(transaction) {
+  const type = transaction.type ?? ''
+  if (type === 'INTEREST_PAYMENT' && transaction.assetClass === 'BOND') return 'Cupón bono'
+  if (type === 'INTEREST_PAYMENT') return 'Intereses'
+  if (type === 'DIVIDEND' || type === 'DIVIDEND_PAYMENT') return 'Dividendo'
+  return 'Rendimiento'
 }
 
 function addInvestmentFlow(facts, assetClass, amount) {
@@ -231,7 +247,45 @@ export function marketChangeForSnapshot(snapshot, previousReliableSnapshot) {
   return previousGrowth === undefined ? undefined : currentGrowth - previousGrowth
 }
 
-export function calculateDashboard(snapshots) {
+function transactionIncomeBreakdown(snapshot, transactions) {
+  if (!transactions) return undefined
+  const facts = classifyTradeRepublicTransactions(transactions, snapshot.periodStart, snapshot.periodEnd)
+  if (facts.generatedCashItems.length === 0) return undefined
+
+  return {
+    source: 'csv',
+    coverageStatus: 'complete',
+    items: facts.generatedCashItems,
+    total: facts.generatedCash,
+  }
+}
+
+function snapshotIncomeBreakdown(snapshot, passiveIncomeValue) {
+  const items = []
+  if ((snapshot.reportedInterest ?? 0) > 0) {
+    items.push({ key: `${snapshot.month}-reported-interest`, label: 'Intereses reportados', value: snapshot.reportedInterest })
+  }
+  if ((snapshot.reportedBondPayments ?? 0) > 0) {
+    items.push({ key: `${snapshot.month}-reported-bonds`, label: 'Bonos reportados', value: snapshot.reportedBondPayments })
+  }
+  const knownTotal = items.reduce((sum, item) => sum + item.value, 0)
+  if (passiveIncomeValue > knownTotal) {
+    items.push({ key: `${snapshot.month}-other-generated-cash`, label: 'Otros rendimientos', value: passiveIncomeValue - knownTotal })
+  }
+  if (items.length === 0 && passiveIncomeValue > 0) {
+    items.push({ key: `${snapshot.month}-generated-cash`, label: 'Rendimientos recibidos', value: passiveIncomeValue })
+  }
+
+  return {
+    source: 'snapshot',
+    coverageStatus: items.length > 0 ? 'complete' : 'missing',
+    items,
+    total: passiveIncomeValue,
+  }
+}
+
+export function calculateDashboard(snapshots, options = {}) {
+  const transactions = options.transactions
   const orderedSnapshots = [...snapshots].sort((left, right) => left.month.localeCompare(right.month))
   if (orderedSnapshots.length === 0) return { snapshots: [], summary: undefined }
 
@@ -269,6 +323,8 @@ export function calculateDashboard(snapshots) {
     const passiveIncomeYtd = orderedSnapshots
       .filter((candidate) => candidate.month.slice(0, 4) === snapshot.month.slice(0, 4) && candidate.month <= snapshot.month)
       .reduce((sum, candidate) => sum + (candidate.generatedCash ?? candidate.reportedGeneratedCash ?? 0), 0)
+    const incomeBreakdown = transactionIncomeBreakdown(snapshot, transactions)
+      ?? snapshotIncomeBreakdown(snapshot, passiveIncomeValue)
     if (snapshot.snapshotOrigin === 'baseline' || snapshot.snapshotOrigin === 'tracked') previousReliableSnapshot = snapshot
 
     return {
@@ -291,12 +347,7 @@ export function calculateDashboard(snapshots) {
       passiveIncome: passiveIncomeValue,
       passiveIncomeYtd,
       assetBreakdown,
-      incomeBreakdown: {
-        source: 'snapshot',
-        coverageStatus: 'complete',
-        items: [{ key: 'generatedCash', label: 'Rendimientos recibidos', value: passiveIncomeValue }],
-        total: passiveIncomeValue,
-      },
+      incomeBreakdown,
       savingsBreakdown: {
         tradeRepublicCashContribution: snapshot.tradeRepublicCashContribution ?? 0,
         tradeRepublicEquity: snapshot.tradeRepublicEquityFlow ?? 0,

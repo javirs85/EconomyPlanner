@@ -712,5 +712,10 @@ export function getDashboard() {
   const snapshots = database.prepare(`
     SELECT * FROM monthly_snapshots ORDER BY month ASC
   `).all().map(mapMonthlySnapshot)
-  return calculateDashboard(snapshots)
+  const transactions = database.prepare(`
+    SELECT payload_json
+    FROM raw_trade_republic_transactions
+    ORDER BY datetime ASC
+  `).all().map(({ payload_json }) => JSON.parse(payload_json))
+  return calculateDashboard(snapshots, { transactions })
 }

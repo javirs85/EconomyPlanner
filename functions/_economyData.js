@@ -328,5 +328,5 @@ export function getYearClosingStatus(data, year) {
 
 export function getDashboard(data) {
   const snapshots = [...data.monthlySnapshots].sort((left, right) => left.month.localeCompare(right.month))
-  return calculateDashboard(snapshots)
+  return calculateDashboard(snapshots, { transactions: data.transactions })
 }

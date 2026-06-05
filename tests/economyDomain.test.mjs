@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { classifyTradeRepublicTransactions, netAmount, resolveSnapshotPrincipals } from '../shared/economyDomain.js'
+import { calculateDashboard, classifyTradeRepublicTransactions, netAmount, resolveSnapshotPrincipals } from '../shared/economyDomain.js'
 
 test('netAmount uses amount plus tax and fee as the accounting amount', () => {
   assert.equal(netAmount({ amount: 15, tax: -2.85, fee: -0.15 }), 12)
@@ -79,4 +79,63 @@ test('classifies generated cash, investment flows, expenses, maturities and outb
     counterpartyName: undefined,
     paymentReference: undefined,
   }])
+  assert.deepEqual(facts.generatedCashItems, [
+    {
+      key: '2026-05-05-INTEREST_PAYMENT-0',
+      date: '2026-05-05',
+      label: 'Intereses',
+      detail: '',
+      value: 81,
+    },
+    {
+      key: '2026-05-06-DIVIDEND-1',
+      date: '2026-05-06',
+      label: 'Dividendo',
+      detail: '',
+      value: 40.5,
+    },
+  ])
+})
+
+test('dashboard exposes received payment items from Trade Republic csv', () => {
+  const dashboard = calculateDashboard([{
+    month: '2026-05',
+    periodStart: '2026-05-04',
+    periodEnd: '2026-06-03',
+    caixaBalance: 0,
+    tradeRepublicCashBalance: 200,
+    tradeRepublicEquityValue: 0,
+    tradeRepublicFixedIncomeValue: 0,
+    tradeRepublicCryptoValue: 0,
+    myInvestorEquityValue: 0,
+    myInvestorFixedIncomeValue: 0,
+    myInvestorCryptoValue: 0,
+    criptanCryptoValue: 0,
+    urbanitaeRealEstateValue: 0,
+    generatedCash: 121.5,
+    reportedGeneratedCash: 121.5,
+    snapshotOrigin: 'baseline',
+  }], {
+    transactions: [
+      { transactionId: 'interest-1', date: '2026-05-05', type: 'INTEREST_PAYMENT', amount: 100, tax: -19, description: 'Cash interest' },
+      { transactionId: 'dividend-1', date: '2026-05-06', type: 'DIVIDEND', amount: 50, tax: -9.5, name: 'Acme ETF' },
+    ],
+  })
+
+  assert.deepEqual(dashboard.snapshots[0].incomeBreakdown.items, [
+    {
+      key: 'interest-1',
+      date: '2026-05-05',
+      label: 'Intereses',
+      detail: 'Cash interest',
+      value: 81,
+    },
+    {
+      key: 'dividend-1',
+      date: '2026-05-06',
+      label: 'Dividendo',
+      detail: 'Acme ETF',
+      value: 40.5,
+    },
+  ])
 })

@@ -40,7 +40,9 @@ export interface AssetBreakdownItem {
 
 export interface IncomeBreakdownItem {
   key: string
+  date?: string
   label: string
+  detail?: string
   value: number
 }
 
