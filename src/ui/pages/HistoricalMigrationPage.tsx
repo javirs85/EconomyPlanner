@@ -31,6 +31,7 @@ export function HistoricalMigrationPage() {
   const [error, setError] = useState<string>()
   const [saving, setSaving] = useState(false)
   const [importResult, setImportResult] = useState<{ imported: string[], updated: string[], skipped: string[] }>()
+  const [adjustmentResult, setAdjustmentResult] = useState<{ updated: string[], missing: string[], skipped: string[] }>()
   const mismatches = useMemo(() => preview?.rows.filter((row) => Math.abs(row.difference) > 0.05) ?? [], [preview])
   const adjustedRows = useMemo(() => preview?.rows.filter((row) => row.tradeRepublicEquityAdjustmentValue !== undefined) ?? [], [preview])
 
@@ -39,6 +40,7 @@ export function HistoricalMigrationPage() {
       setPreview(parseHistoricalPaste(text, tradeRepublicEquityAdjustmentsText))
       setError(undefined)
       setImportResult(undefined)
+      setAdjustmentResult(undefined)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'No se pudo interpretar la tabla.')
     }
@@ -63,6 +65,26 @@ export function HistoricalMigrationPage() {
     }
   }
 
+  async function applyTradeRepublicEquityAdjustments() {
+    setSaving(true)
+    setError(undefined)
+    try {
+      const response = await fetch('/api/historical-migration/tr-equity-adjustments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tradeRepublicEquityAdjustmentsText }),
+      })
+      const result = await response.json() as { updated?: string[], missing?: string[], skipped?: string[], error?: string }
+      if (!response.ok || result.error) throw new Error(result.error ?? 'No se pudieron aplicar los ajustes TR RV.')
+      setAdjustmentResult({ updated: result.updated ?? [], missing: result.missing ?? [], skipped: result.skipped ?? [] })
+      setImportResult(undefined)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'No se pudieron aplicar los ajustes TR RV.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <>
       <header className="page-header">
@@ -74,7 +96,12 @@ export function HistoricalMigrationPage() {
         <textarea onChange={(event) => setText(event.target.value)} placeholder="Pega aquí cabecera y filas separadas por tabulaciones..." value={text} />
         <div><p className="eyebrow">Opcional</p><h2>Ajustes TR RV beneficio</h2><p>Pega month,trRvValue,trRvUnrealizedProfit. El aportado se calculara como valor menos beneficio.</p></div>
         <textarea onChange={(event) => setTradeRepublicEquityAdjustmentsText(event.target.value)} placeholder="month,trRvValue,trRvUnrealizedProfit&#10;2025-07,15526.49,492.93" value={tradeRepublicEquityAdjustmentsText} />
-        <div className="migration-actions"><button className="primary-button" disabled={!text.trim()} onClick={generatePreview}>Generar previsualización</button>{error && <span>{error}</span>}</div>
+        <div className="migration-actions">
+          <button className="primary-button" disabled={!text.trim()} onClick={generatePreview}>Generar previsualización</button>
+          <button className="secondary-button" disabled={saving || !tradeRepublicEquityAdjustmentsText.trim()} onClick={applyTradeRepublicEquityAdjustments}>{saving ? 'Aplicando...' : 'Aplicar ajustes TR RV'}</button>
+          {error && <span>{error}</span>}
+          {adjustmentResult && <span>{adjustmentResult.updated.length} meses actualizados, {adjustmentResult.missing.length} no encontrados, {adjustmentResult.skipped.length} protegidos.</span>}
+        </div>
       </section>
 
       {preview && (

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import { applyHistoricalTradeRepublicEquityAdjustments } from '../functions/_economyData.js'
 import { parseHistoricalSnapshots, parseTradeRepublicEquityAdjustments } from '../server/historicalMigration.js'
 
 function historicalLine({ date, tradeRepublicInvestmentValue, reportedNetWorth }) {
@@ -51,4 +52,66 @@ test('applies TR RV historical adjustment without changing total TR investment',
     snapshot.tradeRepublicEquityValue + snapshot.tradeRepublicFixedIncomeValue + snapshot.tradeRepublicCryptoValue,
     2000,
   )
+})
+
+test('applies TR RV adjustments directly to existing historical snapshots only', () => {
+  const data = {
+    transactions: [],
+    importBatches: [],
+    monthlySnapshots: [
+      {
+        month: '2025-07',
+        periodStart: '2025-07-04',
+        periodEnd: '2025-08-03',
+        caixaBalance: 0,
+        tradeRepublicCashBalance: 0,
+        tradeRepublicEquityValue: 1000,
+        tradeRepublicFixedIncomeValue: 500,
+        tradeRepublicCryptoValue: 500,
+        myInvestorEquityValue: 0,
+        myInvestorFixedIncomeValue: 0,
+        myInvestorCryptoValue: 0,
+        criptanCryptoValue: 0,
+        urbanitaeRealEstateValue: 0,
+        myInvestorExternalFlow: 0,
+        urbanitaeExternalFlow: 0,
+        generatedCash: 12,
+        reportedGeneratedCash: 12,
+        reportedInterest: 10,
+        reportedBondPayments: 2,
+        snapshotOrigin: 'historical-visual',
+      },
+      {
+        month: '2026-05',
+        periodStart: '2026-05-04',
+        periodEnd: '2026-06-03',
+        tradeRepublicEquityValue: 1000,
+        tradeRepublicFixedIncomeValue: 0,
+        tradeRepublicCryptoValue: 0,
+        snapshotOrigin: 'baseline',
+      },
+    ],
+  }
+  const adjustments = parseTradeRepublicEquityAdjustments([
+    'month,trRvValue,trRvUnrealizedProfit,trRvPrincipal',
+    '2025-07,1200,200,1000',
+    '2026-05,1100,100,1000',
+    '2025-08,1300,300,1000',
+  ].join('\n'))
+
+  const result = applyHistoricalTradeRepublicEquityAdjustments(data, adjustments)
+  const updatedSnapshot = data.monthlySnapshots.find((snapshot) => snapshot.month === '2025-07')
+
+  assert.deepEqual(result, {
+    updated: ['2025-07'],
+    missing: ['2025-08'],
+    skipped: ['2026-05'],
+  })
+  assert.equal(updatedSnapshot.tradeRepublicEquityValue, 1200)
+  assert.equal(updatedSnapshot.tradeRepublicEquityPrincipal, 1000)
+  assert.equal(updatedSnapshot.tradeRepublicEquityUnrealizedProfit, 200)
+  assert.equal(updatedSnapshot.tradeRepublicFixedIncomeValue, 400)
+  assert.equal(updatedSnapshot.tradeRepublicCryptoValue, 400)
+  assert.equal(updatedSnapshot.reportedGeneratedCash, 12)
+  assert.equal(updatedSnapshot.generatedCash, 12)
 })

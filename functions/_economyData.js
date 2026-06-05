@@ -254,6 +254,52 @@ export function importHistoricalSnapshots(data, snapshots) {
   return { imported, updated, skipped }
 }
 
+function applyTradeRepublicEquityAdjustment(snapshot, adjustment) {
+  const totalTradeRepublicInvestment = (snapshot.tradeRepublicEquityValue ?? 0)
+    + (snapshot.tradeRepublicFixedIncomeValue ?? 0)
+    + (snapshot.tradeRepublicCryptoValue ?? 0)
+  if (adjustment.tradeRepublicEquityValue > totalTradeRepublicInvestment) {
+    throw new Error(`El ajuste TR RV de ${snapshot.month} supera el total de TR inversion.`)
+  }
+
+  const fixedIncomeAndCrypto = (snapshot.tradeRepublicFixedIncomeValue ?? 0) + (snapshot.tradeRepublicCryptoValue ?? 0)
+  const remaining = totalTradeRepublicInvestment - adjustment.tradeRepublicEquityValue
+  return {
+    ...snapshot,
+    tradeRepublicEquityValue: adjustment.tradeRepublicEquityValue,
+    tradeRepublicEquityPrincipal: adjustment.tradeRepublicEquityPrincipal,
+    tradeRepublicEquityUnrealizedProfit: adjustment.tradeRepublicEquityUnrealizedProfit,
+    tradeRepublicFixedIncomeValue: fixedIncomeAndCrypto > 0
+      ? remaining * (snapshot.tradeRepublicFixedIncomeValue ?? 0) / fixedIncomeAndCrypto
+      : 0,
+    tradeRepublicCryptoValue: fixedIncomeAndCrypto > 0
+      ? remaining * (snapshot.tradeRepublicCryptoValue ?? 0) / fixedIncomeAndCrypto
+      : remaining,
+  }
+}
+
+export function applyHistoricalTradeRepublicEquityAdjustments(data, adjustments) {
+  const updated = []
+  const missing = []
+  const skipped = []
+
+  for (const [month, adjustment] of adjustments) {
+    const snapshot = data.monthlySnapshots.find((candidate) => candidate.month === month)
+    if (!snapshot) {
+      missing.push(month)
+      continue
+    }
+    if (snapshot.snapshotOrigin !== 'historical-visual' && snapshot.snapshotOrigin !== 'historical-migration') {
+      skipped.push(month)
+      continue
+    }
+    saveMonthlyClosing(data, applyTradeRepublicEquityAdjustment(snapshot, adjustment))
+    updated.push(month)
+  }
+
+  return { updated, missing, skipped }
+}
+
 function monthPeriod(year, monthIndex) {
   const month = String(monthIndex + 1).padStart(2, '0')
   const nextMonth = new Date(Date.UTC(year, monthIndex + 1, 3))

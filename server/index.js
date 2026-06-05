@@ -1,6 +1,6 @@
 import { createServer } from 'node:http'
-import { exploreTransactions, getDashboard, getMonthlyClosing, getYearClosingStatus, importHistoricalSnapshots, importTransactions, latestImportedTransactionDate, saveMonthlyClosing } from './database.js'
-import { parseHistoricalSnapshots } from './historicalMigration.js'
+import { applyHistoricalTradeRepublicEquityAdjustments, exploreTransactions, getDashboard, getMonthlyClosing, getYearClosingStatus, importHistoricalSnapshots, importTransactions, latestImportedTransactionDate, saveMonthlyClosing } from './database.js'
+import { parseHistoricalSnapshots, parseTradeRepublicEquityAdjustments } from './historicalMigration.js'
 import { parseTradeRepublicCsv } from './tradeRepublicParser.js'
 
 const port = 5174
@@ -88,6 +88,13 @@ createServer(async (request, response) => {
       const { text, tradeRepublicEquityAdjustmentsText } = await readJson(request)
       if (typeof text !== 'string' || !text.trim()) throw new Error('Falta la tabla historica.')
       sendJson(response, 200, importHistoricalSnapshots(parseHistoricalSnapshots(text, tradeRepublicEquityAdjustmentsText)))
+      return
+    }
+
+    if (request.method === 'POST' && url.pathname === '/api/historical-migration/tr-equity-adjustments') {
+      const { tradeRepublicEquityAdjustmentsText } = await readJson(request)
+      if (typeof tradeRepublicEquityAdjustmentsText !== 'string' || !tradeRepublicEquityAdjustmentsText.trim()) throw new Error('Faltan los ajustes TR RV.')
+      sendJson(response, 200, applyHistoricalTradeRepublicEquityAdjustments(parseTradeRepublicEquityAdjustments(tradeRepublicEquityAdjustmentsText)))
       return
     }
 
