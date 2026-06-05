@@ -37,7 +37,9 @@ h2 { color: #263a33; font: 600 23px/1.15 'Fraunces', serif; margin: 0 0 7px; }
 .chart-layout { display: grid; grid-template-columns: minmax(0, 1fr) 194px; gap: 25px; margin-top: 13px; }
 .chart-main-column { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; min-width: 0; }
 .chart-area { height: 327px; min-width: 0; }
-.returns-chart-area { height: 154px; min-width: 0; padding-top: 2px; border-top: 1px solid #edf0ed; }
+.returns-chart-area { height: 245px; min-width: 0; padding-top: 2px; border-top: 1px solid #edf0ed; }
+.returns-split-chart { display: grid; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; height: 100%; min-width: 0; }
+.returns-mini-chart { min-height: 0; min-width: 0; }
 .chart-area .recharts-wrapper, .chart-area .recharts-surface, .chart-area svg, .chart-area *:focus, .returns-chart-area .recharts-wrapper, .returns-chart-area .recharts-surface, .returns-chart-area svg, .returns-chart-area *:focus { outline: none !important; }
 .returns-chart-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 2px; color: #8c9892; font-size: 10px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; }
 .returns-chart-heading span { margin-right: auto; color: #6f7f78; }

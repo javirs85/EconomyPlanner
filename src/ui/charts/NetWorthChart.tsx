@@ -31,7 +31,7 @@ interface TooltipProps {
 
 interface ReturnsTooltipProps {
   active?: boolean
-  payload?: Array<{ payload: MonthlyOriginStack }>
+  payload?: Array<{ payload: MonthlyOriginStack, dataKey?: string | number }>
 }
 
 function ChartTooltip({ active, payload }: TooltipProps) {
@@ -68,12 +68,14 @@ function ReturnsTooltip({ active, payload }: ReturnsTooltipProps) {
   if (!active || !payload?.length) return null
 
   const month = payload[0].payload
+  const dataKey = payload[0].dataKey
+  const label = dataKey === 'cashFromYields' ? 'Cash generado' : 'Invertido generado'
+  const value = dataKey === 'cashFromYields' ? month.cashFromYields : month.investedGrowth
   return (
     <div className="chart-tooltip compact-tooltip">
       <p>{month.label}</p>
       <dl>
-        <div><dt>Invertido generado</dt><dd>{formatMoney(month.investedGrowth)}</dd></div>
-        <div><dt>Cash generado</dt><dd>{formatMoney(month.cashFromYields)}</dd></div>
+        <div><dt>{label}</dt><dd>{formatMoney(value)}</dd></div>
       </dl>
     </div>
   )
@@ -213,30 +215,75 @@ export function GeneratedReturnsChart({ data }: ReturnsChartProps) {
   const yearBoundaries = data.filter((snapshot, index) => index > 0 && snapshot.month.slice(5, 7) === '01')
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={data} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
-        <CartesianGrid vertical={false} stroke="#eef2ef" />
-        <XAxis dataKey="periodEnd" tickFormatter={(periodEnd) => labelsByPeriodEnd.get(periodEnd) ?? ''} axisLine={false} tickLine={false} tick={{ fill: '#8a958f', fontSize: 11 }} />
-        <YAxis
-          axisLine={false}
-          tickLine={false}
-          tick={{ fill: '#8a958f', fontSize: 11 }}
-          tickFormatter={(value: number) => formatMoney(value, true)}
-          width={56}
-        />
-        <Tooltip content={<ReturnsTooltip />} cursor={{ stroke: '#d8e1dc', strokeWidth: 1 }} />
-        <Line dataKey="investedGrowth" name="Invertido generado" type="monotone" stroke="#3f7b5e" strokeWidth={2.2} dot={{ r: 2.4, strokeWidth: 0 }} activeDot={{ r: 4, strokeWidth: 0 }} />
-        <Line dataKey="cashFromYields" name="Cash generado" type="monotone" stroke="#86b6db" strokeWidth={2.2} dot={{ r: 2.4, strokeWidth: 0 }} activeDot={{ r: 4, strokeWidth: 0 }} />
-        {yearBoundaries.map((snapshot) => (
-          <ReferenceLine
-            key={`returns-year-boundary-${snapshot.month}`}
-            x={snapshot.periodEnd}
-            stroke="#c4d0ca"
-            strokeDasharray="2 4"
-            strokeWidth={1}
+    <div className="returns-split-chart">
+      <MiniReturnLineChart
+        color="#3f7b5e"
+        data={data}
+        dataKey="investedGrowth"
+        labelsByPeriodEnd={labelsByPeriodEnd}
+        showXAxis={false}
+        yearBoundaries={yearBoundaries}
+      />
+      <MiniReturnLineChart
+        color="#86b6db"
+        data={data}
+        dataKey="cashFromYields"
+        labelsByPeriodEnd={labelsByPeriodEnd}
+        showXAxis
+        yearBoundaries={yearBoundaries}
+      />
+    </div>
+  )
+}
+
+function MiniReturnLineChart({
+  color,
+  data,
+  dataKey,
+  labelsByPeriodEnd,
+  showXAxis,
+  yearBoundaries,
+}: {
+  color: string
+  data: MonthlyOriginStack[]
+  dataKey: 'investedGrowth' | 'cashFromYields'
+  labelsByPeriodEnd: Map<string, string>
+  showXAxis: boolean
+  yearBoundaries: MonthlyOriginStack[]
+}) {
+  return (
+    <div className="returns-mini-chart">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
+          <CartesianGrid vertical={false} stroke="#eef2ef" />
+          <XAxis
+            axisLine={false}
+            dataKey="periodEnd"
+            height={showXAxis ? 28 : 0}
+            tick={showXAxis ? { fill: '#8a958f', fontSize: 11 } : false}
+            tickFormatter={(periodEnd) => labelsByPeriodEnd.get(periodEnd) ?? ''}
+            tickLine={false}
           />
-        ))}
-      </LineChart>
-    </ResponsiveContainer>
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: '#8a958f', fontSize: 11 }}
+            tickFormatter={(value: number) => formatMoney(value, true)}
+            width={56}
+          />
+          <Tooltip content={<ReturnsTooltip />} cursor={{ stroke: '#d8e1dc', strokeWidth: 1 }} />
+          <Line dataKey={dataKey} type="monotone" stroke={color} strokeWidth={2.2} dot={{ r: 2.4, strokeWidth: 0 }} activeDot={{ r: 4, strokeWidth: 0 }} />
+          {yearBoundaries.map((snapshot) => (
+            <ReferenceLine
+              key={`${dataKey}-year-boundary-${snapshot.month}`}
+              x={snapshot.periodEnd}
+              stroke="#c4d0ca"
+              strokeDasharray="2 4"
+              strokeWidth={1}
+            />
+          ))}
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
   )
 }
