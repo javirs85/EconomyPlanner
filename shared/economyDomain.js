@@ -40,7 +40,7 @@ export function classifyTradeRepublicTransactions(transactions, periodStart, per
         key: transaction.transactionId ?? `${transaction.date}-${type}-${facts.generatedCashItems.length}`,
         date: transaction.date,
         label: generatedCashLabel(transaction),
-        detail: transaction.description ?? transaction.name ?? '',
+        detail: generatedCashDetail(transaction),
         value: amount,
       })
       continue
@@ -102,6 +102,13 @@ function generatedCashLabel(transaction) {
   if (type === 'INTEREST_PAYMENT') return 'Intereses'
   if (type === 'DIVIDEND' || type === 'DIVIDEND_PAYMENT') return 'Dividendo'
   return 'Rendimiento'
+}
+
+function generatedCashDetail(transaction) {
+  const type = transaction.type ?? ''
+  if (type === 'INTEREST_PAYMENT' && transaction.assetClass === 'BOND') return transaction.name ?? ''
+  if (type === 'INTEREST_PAYMENT') return ''
+  return transaction.name ?? transaction.description ?? ''
 }
 
 function addInvestmentFlow(facts, assetClass, amount) {

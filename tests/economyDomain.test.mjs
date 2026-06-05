@@ -112,30 +112,30 @@ test('dashboard exposes received payment items from Trade Republic csv', () => {
     myInvestorCryptoValue: 0,
     criptanCryptoValue: 0,
     urbanitaeRealEstateValue: 0,
-    generatedCash: 121.5,
-    reportedGeneratedCash: 121.5,
+    generatedCash: 121,
+    reportedGeneratedCash: 121,
     snapshotOrigin: 'baseline',
   }], {
     transactions: [
-      { transactionId: 'interest-1', date: '2026-05-05', type: 'INTEREST_PAYMENT', amount: 100, tax: -19, description: 'Cash interest' },
-      { transactionId: 'dividend-1', date: '2026-05-06', type: 'DIVIDEND', amount: 50, tax: -9.5, name: 'Acme ETF' },
+      { transactionId: 'bond-1', date: '2026-05-05', type: 'INTEREST_PAYMENT', assetClass: 'BOND', amount: 60, tax: -11.4, name: 'Mär. 2028', description: 'Interest Payment for ISIN XS...' },
+      { transactionId: 'interest-1', date: '2026-05-06', type: 'INTEREST_PAYMENT', amount: 100, tax: -27.6, description: 'Interest payment for payout collection 019e...' },
     ],
   })
 
   assert.deepEqual(dashboard.snapshots[0].incomeBreakdown.items, [
     {
-      key: 'interest-1',
+      key: 'bond-1',
       date: '2026-05-05',
-      label: 'Intereses',
-      detail: 'Cash interest',
-      value: 81,
+      label: 'Cupón bono',
+      detail: 'Mär. 2028',
+      value: 48.6,
     },
     {
-      key: 'dividend-1',
+      key: 'interest-1',
       date: '2026-05-06',
-      label: 'Dividendo',
-      detail: 'Acme ETF',
-      value: 40.5,
+      label: 'Intereses',
+      detail: '',
+      value: 72.4,
     },
   ])
 })
