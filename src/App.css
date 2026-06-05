@@ -111,11 +111,9 @@ h2 { color: #263a33; font: 600 23px/1.15 'Fraunces', serif; margin: 0 0 7px; }
 .income-card h2 { font-size: 19px; }
 .income-bars { display: grid; gap: 11px; margin-top: 14px; }
 .income-row > div:first-child { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
-.income-row span { color: #51655d; font-size: 11px; font-weight: 700; min-width: 0; }
+.income-row span { color: #51655d; flex: 1; font-size: 11px; font-weight: 700; min-width: 0; }
 .income-row span small { display: block; color: #8b9893; font-size: 10px; font-weight: 500; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.income-row strong { color: #42534d; font-size: 12px; }
-.income-track { height: 8px; margin-top: 6px; overflow: hidden; border-radius: 20px; background: #edf1ee; }
-.income-track span { display: block; height: 100%; min-width: 3px; border-radius: inherit; }
+.income-row strong { color: #42534d; flex: 0 0 auto; font-size: 12px; }
 .compact-empty { padding: 18px 0 4px; }
 .selected-kpis-card { display: grid; grid-template-columns: 1fr; gap: 1px; padding: 0; overflow: hidden; background: #e5ebe7; }
 .selected-kpi { min-height: 132px; padding: 18px; background: #fff; }

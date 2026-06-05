@@ -44,18 +44,6 @@ const assetColors: Record<string, string> = {
   urbanitaeRealEstateGrowth: '#d09a78',
 }
 
-const incomeColors: Record<string, string> = {
-  generatedCash: '#579074',
-  investmentIncome: '#579074',
-  interestPayments: '#579074',
-  dividendPayments: '#78a98d',
-  benefitPayments: '#93b7a2',
-  bondMaturities: '#b3a27c',
-  reportedInterest: '#579074',
-  reportedBondPayments: '#b3a27c',
-  otherGeneratedCash: '#8aa9b7',
-}
-
 type PieAsset = {
   key: string
   groupKey: string
@@ -245,36 +233,26 @@ function AssetPieCard({ snapshot }: { snapshot: MonthlyOriginStack }) {
   )
 }
 
-function IncomeRow({ item, max }: { item: IncomeBreakdownItem; max: number }) {
-  const width = max ? item.value / max * 100 : 0
-  const itemLabel = item.label.toLowerCase()
-  const color = itemLabel.includes('bono') || itemLabel.includes('cupón')
-    ? incomeColors.bondMaturities
-    : itemLabel.includes('dividendo')
-      ? incomeColors.dividendPayments
-      : incomeColors.generatedCash
-
+function IncomeRow({ item }: { item: IncomeBreakdownItem }) {
   return (
     <div className="income-row">
       <div>
         <span>{item.label}{item.date && <small>{new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'short' }).format(new Date(`${item.date}T00:00:00`))}</small>}{item.detail && <small>{item.detail}</small>}</span>
         <strong>{formatMoney(item.value)}</strong>
       </div>
-      <div className="income-track"><span style={{ width: `${width}%`, backgroundColor: color }} /></div>
     </div>
   )
 }
 
 function IncomeBreakdownCard({ snapshot }: { snapshot: MonthlyOriginStack }) {
   const items = snapshot.incomeBreakdown.items.filter((item) => item.value > 0)
-  const max = Math.max(...items.map((item) => item.value), 0)
 
   return (
     <article className="panel income-card">
       <div className="card-heading compact"><div><p className="eyebrow">Recibido</p><h2>Pagos recibidos</h2></div><strong>{formatMoney(snapshot.incomeBreakdown.total)}</strong></div>
       <div className="income-bars">
         {items.length > 0
-          ? items.map((item) => <IncomeRow key={item.key} item={item} max={max} />)
+          ? items.map((item) => <IncomeRow key={item.key} item={item} />)
           : <p className="empty-state compact-empty">Sin ingresos recibidos en este periodo.</p>}
       </div>
     </article>
