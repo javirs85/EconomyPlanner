@@ -113,7 +113,7 @@ const historicalStackColors = {
   cashFromYields: '#adc5d8',
   fixedIncome: '#a5aca9',
   investedPrincipal: '#6f8f7c',
-  investedGrowth: '#6f8f7c',
+  investedGrowth: '#b8d7c2',
   realEstatePrincipal: '#bc8d73',
 }
 
