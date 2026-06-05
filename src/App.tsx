@@ -110,8 +110,9 @@ function AssetPieCard({ snapshot }: { snapshot: MonthlyOriginStack }) {
                 onMouseEnter={(_, index) => setActiveAssetKey(visibleAssets[index]?.key)}
                 outerRadius="96%"
                 paddingAngle={2}
+                stroke="none"
               >
-                {visibleAssets.map((asset) => <Cell key={asset.key} fill={assetColors[asset.key]} opacity={!activeAssetKey || activeAssetKey === asset.key ? 1 : 0.42} />)}
+                {visibleAssets.map((asset) => <Cell key={asset.key} fill={assetColors[asset.key]} opacity={!activeAssetKey || activeAssetKey === asset.key ? 1 : 0.42} stroke="none" />)}
               </Pie>
             </PieChart>
           </ResponsiveContainer>
