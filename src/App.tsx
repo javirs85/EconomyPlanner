@@ -30,6 +30,7 @@ const assetColors: Record<string, string> = {
   caixaCash: '#2d6f9f',
   tradeRepublicCash: '#4f8fb5',
   tradeRepublicEquity: '#3c7d57',
+  tradeRepublicEquityGrowth: '#7eb892',
   myInvestorEquity: '#5e9f72',
   tradeRepublicFixedIncome: '#7a8582',
   myInvestorFixedIncome: '#a8b1ad',
@@ -48,6 +49,57 @@ const incomeColors: Record<string, string> = {
   reportedInterest: '#579074',
   reportedBondPayments: '#b3a27c',
   otherGeneratedCash: '#8aa9b7',
+}
+
+type PieAsset = {
+  key: string
+  groupKey: string
+  label: string
+  value: number
+  color: string
+}
+
+function pieAssetsFromBreakdown(assets: MonthlyOriginStack['assetBreakdown']): PieAsset[] {
+  return assets.flatMap((asset) => {
+    if (asset.key !== 'tradeRepublicEquity') {
+      return [{
+        key: asset.key,
+        groupKey: asset.key,
+        label: asset.label,
+        value: asset.value,
+        color: assetColors[asset.key],
+      }]
+    }
+
+    const principal = Math.max(0, asset.principal ?? asset.value)
+    const growth = Math.max(0, asset.value - principal)
+    if (growth <= 0 || principal <= 0) {
+      return [{
+        key: asset.key,
+        groupKey: asset.key,
+        label: asset.label,
+        value: asset.value,
+        color: assetColors.tradeRepublicEquity,
+      }]
+    }
+
+    return [
+      {
+        key: 'tradeRepublicEquityPrincipal',
+        groupKey: asset.key,
+        label: 'TR renta variable aportado',
+        value: principal,
+        color: assetColors.tradeRepublicEquity,
+      },
+      {
+        key: 'tradeRepublicEquityGrowth',
+        groupKey: asset.key,
+        label: 'TR renta variable beneficio',
+        value: growth,
+        color: assetColors.tradeRepublicEquityGrowth,
+      },
+    ]
+  }).filter((asset) => asset.value > 0)
 }
 
 function formatMonth(month: string) {
@@ -117,6 +169,7 @@ function GeneratedKpi({ month, tone, value, ytd, total }: { month: string; tone:
 function AssetPieCard({ snapshot }: { snapshot: MonthlyOriginStack }) {
   const [activeAssetKey, setActiveAssetKey] = useState<string>()
   const visibleAssets = snapshot.assetBreakdown.filter((asset) => asset.value > 0)
+  const pieAssets = pieAssetsFromBreakdown(visibleAssets)
 
   return (
     <article className="panel selected-allocation-card" onMouseLeave={() => setActiveAssetKey(undefined)}>
@@ -126,16 +179,16 @@ function AssetPieCard({ snapshot }: { snapshot: MonthlyOriginStack }) {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart accessibilityLayer={false}>
               <Pie
-                data={visibleAssets}
+                data={pieAssets}
                 dataKey="value"
                 innerRadius="40%"
                 nameKey="label"
-                onMouseEnter={(_, index) => setActiveAssetKey(visibleAssets[index]?.key)}
+                onMouseEnter={(_, index) => setActiveAssetKey(pieAssets[index]?.groupKey)}
                 outerRadius="96%"
-                paddingAngle={2}
+                paddingAngle={0}
                 stroke="none"
               >
-                {visibleAssets.map((asset) => <Cell key={asset.key} fill={assetColors[asset.key]} opacity={!activeAssetKey || activeAssetKey === asset.key ? 1 : 0.42} stroke="none" />)}
+                {pieAssets.map((asset) => <Cell key={asset.key} fill={asset.color} opacity={!activeAssetKey || activeAssetKey === asset.groupKey ? 1 : 0.42} stroke="none" />)}
               </Pie>
             </PieChart>
           </ResponsiveContainer>
