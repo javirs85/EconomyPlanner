@@ -3,7 +3,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  Customized,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -135,51 +135,12 @@ function StackBar({ data, dataKey, name, selectedPeriodEnd, onSelectSnapshot, ra
   )
 }
 
-function YearBoundaryLines({ data }: { data: MonthlyOriginStack[] }) {
-  return (
-    <Customized
-      component={({ xAxisMap, yAxisMap }: {
-        xAxisMap?: Record<string, { scale: (value: string) => number }>
-        yAxisMap?: Record<string, { y: number, height: number }>
-      }) => {
-        const xAxis = xAxisMap?.[0]
-        const yAxis = yAxisMap?.[0]
-        if (!xAxis || !yAxis) return null
-
-        return (
-          <g aria-hidden="true">
-            {data.map((snapshot, index) => {
-              const previous = data[index - 1]
-              if (!previous || snapshot.month.slice(5, 7) !== '01') return null
-              const currentX = xAxis.scale(snapshot.periodEnd)
-              const previousX = xAxis.scale(previous.periodEnd)
-              const x = previousX + (currentX - previousX) / 2
-
-              return (
-                <line
-                  key={`year-boundary-${snapshot.month}`}
-                  x1={x}
-                  x2={x}
-                  y1={yAxis.y}
-                  y2={yAxis.y + yAxis.height}
-                  stroke="#cbd7d1"
-                  strokeDasharray="3 5"
-                  strokeWidth={1}
-                />
-              )
-            })}
-          </g>
-        )
-      }}
-    />
-  )
-}
-
 export function NetWorthChart({ data, selectedPeriodEnd, onSelectSnapshot }: NetWorthChartProps) {
   const chartData = data.map((snapshot) => snapshot.snapshotOrigin === 'historical-visual'
     ? { ...snapshot, investedPrincipal: snapshot.investedPrincipal + snapshot.investedGrowth, investedGrowth: 0 }
     : snapshot)
   const labelsByPeriodEnd = new Map(chartData.map((snapshot) => [snapshot.periodEnd, snapshot.label]))
+  const yearBoundaries = chartData.filter((snapshot, index) => index > 0 && snapshot.month.slice(5, 7) === '01')
 
   return (
     <ResponsiveContainer width="100%" height="100%">
@@ -194,13 +155,28 @@ export function NetWorthChart({ data, selectedPeriodEnd, onSelectSnapshot }: Net
           width={56}
         />
         <Tooltip content={<ChartTooltip />} cursor={{ fill: '#f2f6f3' }} />
-        <YearBoundaryLines data={chartData} />
         <StackBar data={chartData} dataKey="cashFromSalary" name="Cash aportado" selectedPeriodEnd={selectedPeriodEnd} onSelectSnapshot={onSelectSnapshot} />
         <StackBar data={chartData} dataKey="cashFromYields" name="Cash generado" selectedPeriodEnd={selectedPeriodEnd} onSelectSnapshot={onSelectSnapshot} />
         <StackBar data={chartData} dataKey="fixedIncome" name="Renta fija" selectedPeriodEnd={selectedPeriodEnd} onSelectSnapshot={onSelectSnapshot} />
         <StackBar data={chartData} dataKey="investedPrincipal" name="Invertido aportado" selectedPeriodEnd={selectedPeriodEnd} onSelectSnapshot={onSelectSnapshot} />
         <StackBar data={chartData} dataKey="investedGrowth" name="Invertido generado" selectedPeriodEnd={selectedPeriodEnd} onSelectSnapshot={onSelectSnapshot} />
         <StackBar data={chartData} dataKey="realEstatePrincipal" name="Inmobiliario aportado" selectedPeriodEnd={selectedPeriodEnd} onSelectSnapshot={onSelectSnapshot} radius={[4, 4, 0, 0]} />
+        {yearBoundaries.map((snapshot) => (
+          <ReferenceLine
+            key={`year-boundary-${snapshot.month}`}
+            x={snapshot.periodEnd}
+            stroke="#9aa9a2"
+            strokeDasharray="2 4"
+            strokeWidth={1.5}
+            label={{
+              value: snapshot.month.slice(0, 4),
+              position: 'insideTop',
+              fill: '#6f7f78',
+              fontSize: 10,
+              fontWeight: 700,
+            }}
+          />
+        ))}
       </BarChart>
     </ResponsiveContainer>
   )
