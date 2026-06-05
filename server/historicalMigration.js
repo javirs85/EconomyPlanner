@@ -39,7 +39,32 @@ function normalizeAllocation(allocation) {
   }
 }
 
-export function parseHistoricalSnapshots(text) {
+export function parseTradeRepublicEquityAdjustments(text = '') {
+  const adjustments = new Map()
+  const lines = text.trim().split(/\r?\n/).filter(Boolean)
+
+  for (const line of lines) {
+    const cells = line.split(/[;,\t]/).map((cell) => cell.trim())
+    const month = cells[0]
+    if (!/^\d{4}-\d{2}$/.test(month)) continue
+
+    const tradeRepublicEquityValue = parseSpanishNumber(cells[1])
+    const tradeRepublicEquityUnrealizedProfit = parseSpanishNumber(cells[2])
+    if (!Number.isFinite(tradeRepublicEquityValue) || !Number.isFinite(tradeRepublicEquityUnrealizedProfit)) continue
+    if (tradeRepublicEquityValue <= 0) continue
+
+    adjustments.set(month, {
+      tradeRepublicEquityValue,
+      tradeRepublicEquityUnrealizedProfit,
+      tradeRepublicEquityPrincipal: tradeRepublicEquityValue - tradeRepublicEquityUnrealizedProfit,
+    })
+  }
+
+  return adjustments
+}
+
+export function parseHistoricalSnapshots(text, tradeRepublicEquityAdjustmentsText = '') {
+  const tradeRepublicEquityAdjustments = parseTradeRepublicEquityAdjustments(tradeRepublicEquityAdjustmentsText)
   const selectedByMonth = new Map()
   const rows = text.trim().split(/\r?\n/).slice(1)
 
@@ -73,6 +98,19 @@ export function parseHistoricalSnapshots(text) {
     const value = (cellIndex) => parseSpanishNumber(cells[cellIndex])
     const tradeRepublicInvestmentValue = value(5)
     const { periodStart, periodEnd } = monthlyPeriod(month)
+    const equityAdjustment = tradeRepublicEquityAdjustments.get(month)
+    if (equityAdjustment && equityAdjustment.tradeRepublicEquityValue > tradeRepublicInvestmentValue) {
+      throw new Error(`El ajuste TR RV de ${month} supera el total de TR inversion.`)
+    }
+    const remainingAllocation = currentAllocation.fixedIncome + currentAllocation.crypto
+    const tradeRepublicEquityValue = equityAdjustment?.tradeRepublicEquityValue ?? tradeRepublicInvestmentValue * currentAllocation.equity
+    const tradeRepublicRemainingValue = Math.max(0, tradeRepublicInvestmentValue - tradeRepublicEquityValue)
+    const tradeRepublicFixedIncomeValue = equityAdjustment && remainingAllocation > 0
+      ? tradeRepublicRemainingValue * currentAllocation.fixedIncome / remainingAllocation
+      : tradeRepublicInvestmentValue * currentAllocation.fixedIncome
+    const tradeRepublicCryptoValue = equityAdjustment && remainingAllocation > 0
+      ? tradeRepublicRemainingValue * currentAllocation.crypto / remainingAllocation
+      : tradeRepublicInvestmentValue * currentAllocation.crypto
 
     return {
       month,
@@ -80,9 +118,11 @@ export function parseHistoricalSnapshots(text) {
       periodEnd,
       caixaBalance: value(1),
       tradeRepublicCashBalance: value(6),
-      tradeRepublicEquityValue: tradeRepublicInvestmentValue * currentAllocation.equity,
-      tradeRepublicFixedIncomeValue: tradeRepublicInvestmentValue * currentAllocation.fixedIncome,
-      tradeRepublicCryptoValue: tradeRepublicInvestmentValue * currentAllocation.crypto,
+      tradeRepublicEquityValue,
+      tradeRepublicEquityPrincipal: equityAdjustment?.tradeRepublicEquityPrincipal,
+      tradeRepublicEquityUnrealizedProfit: equityAdjustment?.tradeRepublicEquityUnrealizedProfit,
+      tradeRepublicFixedIncomeValue,
+      tradeRepublicCryptoValue,
       myInvestorEquityValue: value(2),
       myInvestorFixedIncomeValue: 0,
       myInvestorCryptoValue: 0,

@@ -77,9 +77,9 @@ export async function onRequest(context) {
     }
 
     if (request.method === 'POST' && path === '/api/historical-migration/import') {
-      const { text } = await readJson(request)
+      const { text, tradeRepublicEquityAdjustmentsText } = await readJson(request)
       if (typeof text !== 'string' || !text.trim()) throw new Error('Falta la tabla historica.')
-      const result = importHistoricalSnapshots(data, parseHistoricalSnapshots(text))
+      const result = importHistoricalSnapshots(data, parseHistoricalSnapshots(text, tradeRepublicEquityAdjustmentsText))
       await writeData(env, data)
       return json(result)
     }

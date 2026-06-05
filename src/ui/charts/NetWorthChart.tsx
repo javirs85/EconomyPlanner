@@ -50,7 +50,7 @@ function ChartTooltip({ active, payload }: TooltipProps) {
         <div><dt>Cash aportado</dt><dd>{formatMoney(month.cashFromSalary)}</dd></div>
         <div><dt>Cash generado</dt><dd>{formatMoney(month.cashFromYields)}</dd></div>
         <div><dt>Renta fija</dt><dd>{formatMoney(month.fixedIncome)}</dd></div>
-        {month.snapshotOrigin === 'historical-visual'
+        {month.snapshotOrigin === 'historical-visual' && month.investedGrowth === 0
           ? <div><dt>Invertido visual</dt><dd>{formatMoney(historicalInvestment)}</dd></div>
           : (
             <>
@@ -164,7 +164,7 @@ function StackBar({ data, dataKey, name, selectedPeriodEnd, onSelectSnapshot, ra
 }
 
 export function NetWorthChart({ data, selectedPeriodEnd, onSelectSnapshot }: NetWorthChartProps) {
-  const chartData = data.map((snapshot) => snapshot.snapshotOrigin === 'historical-visual'
+  const chartData = data.map((snapshot) => snapshot.snapshotOrigin === 'historical-visual' && snapshot.investedGrowth === 0
     ? { ...snapshot, investedPrincipal: snapshot.investedPrincipal + snapshot.investedGrowth, investedGrowth: 0 }
     : snapshot)
   const labelsByPeriodEnd = new Map(chartData.map((snapshot) => [snapshot.periodEnd, snapshot.label]))

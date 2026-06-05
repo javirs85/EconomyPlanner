@@ -26,15 +26,17 @@ function MigrationSummary({ preview }: { preview: HistoricalPreview }) {
 
 export function HistoricalMigrationPage() {
   const [text, setText] = useState('')
+  const [tradeRepublicEquityAdjustmentsText, setTradeRepublicEquityAdjustmentsText] = useState('')
   const [preview, setPreview] = useState<HistoricalPreview>()
   const [error, setError] = useState<string>()
   const [saving, setSaving] = useState(false)
-  const [importResult, setImportResult] = useState<{ imported: string[], skipped: string[] }>()
+  const [importResult, setImportResult] = useState<{ imported: string[], updated: string[], skipped: string[] }>()
   const mismatches = useMemo(() => preview?.rows.filter((row) => Math.abs(row.difference) > 0.05) ?? [], [preview])
+  const adjustedRows = useMemo(() => preview?.rows.filter((row) => row.tradeRepublicEquityAdjustmentValue !== undefined) ?? [], [preview])
 
   function generatePreview() {
     try {
-      setPreview(parseHistoricalPaste(text))
+      setPreview(parseHistoricalPaste(text, tradeRepublicEquityAdjustmentsText))
       setError(undefined)
       setImportResult(undefined)
     } catch (caught) {
@@ -49,11 +51,11 @@ export function HistoricalMigrationPage() {
       const response = await fetch('/api/historical-migration/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, tradeRepublicEquityAdjustmentsText }),
       })
-      const result = await response.json() as { imported?: string[], skipped?: string[], error?: string }
+      const result = await response.json() as { imported?: string[], updated?: string[], skipped?: string[], error?: string }
       if (!response.ok || result.error) throw new Error(result.error ?? 'No se pudo guardar la migración histórica.')
-      setImportResult({ imported: result.imported ?? [], skipped: result.skipped ?? [] })
+      setImportResult({ imported: result.imported ?? [], updated: result.updated ?? [], skipped: result.skipped ?? [] })
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'No se pudo guardar la migración histórica.')
     } finally {
@@ -70,6 +72,8 @@ export function HistoricalMigrationPage() {
       <section className="panel migration-paste">
         <div><p className="eyebrow">Paso 1</p><h2>Pega la tabla exportada desde Excel</h2><p>Los vacíos se interpretan como cero. Si hay varias filas en un mes, conservaremos la última.</p></div>
         <textarea onChange={(event) => setText(event.target.value)} placeholder="Pega aquí cabecera y filas separadas por tabulaciones..." value={text} />
+        <div><p className="eyebrow">Opcional</p><h2>Ajustes TR RV beneficio</h2><p>Pega month,trRvValue,trRvUnrealizedProfit. El aportado se calculara como valor menos beneficio.</p></div>
+        <textarea onChange={(event) => setTradeRepublicEquityAdjustmentsText(event.target.value)} placeholder="month,trRvValue,trRvUnrealizedProfit&#10;2025-07,15526.49,492.93" value={tradeRepublicEquityAdjustmentsText} />
         <div className="migration-actions"><button className="primary-button" disabled={!text.trim()} onClick={generatePreview}>Generar previsualización</button>{error && <span>{error}</span>}</div>
       </section>
 
@@ -81,6 +85,17 @@ export function HistoricalMigrationPage() {
             <p>El total se recalcula únicamente con Caixa, TR CC, TR Inversión, MyInvestor, Criptan y Urbanitae. Intereses, bonos y dividendos se conservan como pagos reales reportados, pero no se suman otra vez al patrimonio. El desglose por activo se muestra como referencia orientativa.</p>
             {mismatches.length > 0 && <strong>{mismatches.length} meses tienen diferencias superiores a 0,05 EUR frente al total antiguo. Revísalos antes de importar.</strong>}
           </section>
+          {adjustedRows.length > 0 && (
+            <section className="panel migration-table-panel">
+              <div className="movements-heading"><div><p className="eyebrow">Ajustes aplicados</p><h2>TR RV beneficio no realizado</h2></div><small>{adjustedRows.length} meses con valor real</small></div>
+              <div className="migration-table-wrap">
+                <table className="migration-table">
+                  <thead><tr><th>Mes</th><th>TR RV valor</th><th>TR RV UP</th><th>TR RV aportado</th></tr></thead>
+                  <tbody>{adjustedRows.map((row) => <tr key={row.month}><td>{formatMonth(row.month)}</td><td>{formatMoney(row.tradeRepublicEquityAdjustmentValue ?? 0)}</td><td>{formatMoney(row.tradeRepublicEquityAdjustmentUnrealizedProfit ?? 0)}</td><td>{formatMoney(row.tradeRepublicEquityAdjustmentPrincipal ?? 0)}</td></tr>)}</tbody>
+                </table>
+              </div>
+            </section>
+          )}
           <section className="panel migration-table-panel">
             <div className="movements-heading"><div><p className="eyebrow">Paso 2</p><h2>Snapshots mensuales propuestos</h2></div><small>Previsualización - todavía no se guarda nada</small></div>
             <div className="migration-table-wrap">
@@ -92,7 +107,7 @@ export function HistoricalMigrationPage() {
             <div className="migration-actions">
               <button className="primary-button" disabled={saving || mismatches.length > 0} onClick={importHistoricalRows}>{saving ? 'Guardando...' : 'Guardar históricos visuales'}</button>
               {mismatches.length > 0 && <span>Hay diferencias: revisa la tabla antes de guardar.</span>}
-              {importResult && <span>{importResult.imported.length} meses importados, {importResult.skipped.length} ya existían.</span>}
+              {importResult && <span>{importResult.imported.length} meses importados, {importResult.updated.length} actualizados, {importResult.skipped.length} protegidos.</span>}
             </div>
           </section>
         </>

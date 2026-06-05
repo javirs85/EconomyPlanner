@@ -85,9 +85,9 @@ createServer(async (request, response) => {
     }
 
     if (request.method === 'POST' && url.pathname === '/api/historical-migration/import') {
-      const { text } = await readJson(request)
+      const { text, tradeRepublicEquityAdjustmentsText } = await readJson(request)
       if (typeof text !== 'string' || !text.trim()) throw new Error('Falta la tabla historica.')
-      sendJson(response, 200, importHistoricalSnapshots(parseHistoricalSnapshots(text)))
+      sendJson(response, 200, importHistoricalSnapshots(parseHistoricalSnapshots(text, tradeRepublicEquityAdjustmentsText)))
       return
     }
 

@@ -16,6 +16,9 @@ export interface HistoricalPreviewRow {
   reportedFixedIncomeValue: number
   reportedCryptoValue: number
   reportedRealEstateValue: number
+  tradeRepublicEquityAdjustmentValue?: number
+  tradeRepublicEquityAdjustmentUnrealizedProfit?: number
+  tradeRepublicEquityAdjustmentPrincipal?: number
   recalculatedNetWorth: number
   reportedNetWorth: number
   difference: number
@@ -44,13 +47,41 @@ function parseDate(value: string) {
   return new Date(year, month - 1, day)
 }
 
+function parseTradeRepublicEquityAdjustments(text = '') {
+  const adjustments = new Map<string, {
+    value: number
+    unrealizedProfit: number
+    principal: number
+  }>()
+  const lines = text.trim().split(/\r?\n/).filter(Boolean)
+
+  for (const line of lines) {
+    const cells = line.split(/[;,\t]/).map((cell) => cell.trim())
+    const month = cells[0]
+    if (!/^\d{4}-\d{2}$/.test(month)) continue
+
+    const value = parseSpanishNumber(cells[1])
+    const unrealizedProfit = parseSpanishNumber(cells[2])
+    if (value <= 0) continue
+
+    adjustments.set(month, {
+      value,
+      unrealizedProfit,
+      principal: value - unrealizedProfit,
+    })
+  }
+
+  return adjustments
+}
+
 function localIsoDate(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 
-export function parseHistoricalPaste(text: string): HistoricalPreview {
+export function parseHistoricalPaste(text: string, tradeRepublicEquityAdjustmentsText = ''): HistoricalPreview {
   const lines = text.trim().split(/\r?\n/)
   if (lines.length < 2) throw new Error('Pega la tabla completa, incluida la cabecera.')
+  const tradeRepublicEquityAdjustments = parseTradeRepublicEquityAdjustments(tradeRepublicEquityAdjustmentsText)
 
   const parsedRows = lines.slice(1)
     .map((line) => line.split('\t'))
@@ -80,6 +111,7 @@ export function parseHistoricalPaste(text: string): HistoricalPreview {
         + tradeRepublicInvestmentValue
         + tradeRepublicCashBalance
       const reportedNetWorth = value(12)
+      const tradeRepublicEquityAdjustment = tradeRepublicEquityAdjustments.get(month)
 
       return {
         month,
@@ -99,6 +131,9 @@ export function parseHistoricalPaste(text: string): HistoricalPreview {
           reportedFixedIncomeValue: value(31),
           reportedCryptoValue: value(32),
           reportedRealEstateValue: value(33),
+          tradeRepublicEquityAdjustmentValue: tradeRepublicEquityAdjustment?.value,
+          tradeRepublicEquityAdjustmentUnrealizedProfit: tradeRepublicEquityAdjustment?.unrealizedProfit,
+          tradeRepublicEquityAdjustmentPrincipal: tradeRepublicEquityAdjustment?.principal,
           recalculatedNetWorth,
         reportedNetWorth,
         difference: recalculatedNetWorth - reportedNetWorth,

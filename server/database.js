@@ -480,7 +480,8 @@ export function saveMonthlyClosing(snapshot) {
   const id = existing?.id ?? crypto.randomUUID()
   const createdAt = existing?.created_at ?? now
   const tradeRepublicFacts = calculateTradeRepublicFacts(snapshot.periodStart, snapshot.periodEnd)
-  const generatedCash = tradeRepublicFacts.generatedCash
+  const historicalSnapshot = snapshot.snapshotOrigin === 'historical-migration' || snapshot.snapshotOrigin === 'historical-visual'
+  const generatedCash = historicalSnapshot ? snapshot.generatedCash ?? snapshot.reportedGeneratedCash ?? 0 : tradeRepublicFacts.generatedCash
   const principals = resolveSnapshotPrincipals(snapshot, getPreviousMonthlySnapshot(snapshot.month), tradeRepublicFacts)
   const tradeRepublicEquityPrincipal = principals.tradeRepublicEquityPrincipal
   const tradeRepublicCryptoPrincipal = principals.tradeRepublicCryptoPrincipal
@@ -578,9 +579,9 @@ export function saveMonthlyClosing(snapshot) {
     snapshot.criptanExternalFlow ?? 0,
     snapshot.urbanitaeRealEstateValue,
     snapshot.urbanitaeExternalFlow,
-    0,
-    0,
-    generatedCash,
+    historicalSnapshot ? snapshot.reportedInterest ?? 0 : 0,
+    historicalSnapshot ? snapshot.reportedBondPayments ?? 0 : 0,
+    historicalSnapshot ? snapshot.reportedGeneratedCash ?? generatedCash : generatedCash,
     normalizeSnapshotOrigin(snapshot.snapshotOrigin, snapshot.month),
     2,
     generatedCash,
@@ -610,20 +611,27 @@ export function saveMonthlyClosing(snapshot) {
 }
 
 export function importHistoricalSnapshots(snapshots) {
-  const existingMonths = new Set(database.prepare('SELECT month FROM monthly_snapshots').all().map(({ month }) => month))
+  const existingMonths = new Map(database.prepare('SELECT month, snapshot_origin FROM monthly_snapshots').all().map(({ month, snapshot_origin }) => [month, snapshot_origin]))
   const imported = []
+  const updated = []
   const skipped = []
 
   for (const snapshot of snapshots) {
-    if (existingMonths.has(snapshot.month)) {
+    const existingOrigin = existingMonths.get(snapshot.month)
+    if (existingOrigin && existingOrigin !== 'historical-visual' && existingOrigin !== 'historical-migration') {
       skipped.push(snapshot.month)
       continue
     }
     saveMonthlyClosing(snapshot)
-    imported.push(snapshot.month)
+    if (existingOrigin) {
+      updated.push(snapshot.month)
+    } else {
+      imported.push(snapshot.month)
+    }
+    existingMonths.set(snapshot.month, snapshot.snapshotOrigin)
   }
 
-  return { imported, skipped }
+  return { imported, updated, skipped }
 }
 
 function monthPeriod(year, monthIndex) {
