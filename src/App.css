@@ -28,10 +28,11 @@ h2 { color: #263a33; font: 600 23px/1.15 'Fraunces', serif; margin: 0 0 7px; }
 .metric-card strong { color: #243a32; display: block; font: 600 25px/1.1 'Fraunces', serif; margin-bottom: 9px; }
 .metric-card strong.positive { color: #34785c; }
 .metric-card span { color: #8c9692; font-size: 11px; }
-.passive-income-inline { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 14px; align-items: end; }
-.passive-income-inline div { min-width: 0; }
-.passive-income-inline strong { color: #34785c; display: block; font: 600 22px/1.05 'Fraunces', serif; margin-bottom: 7px; }
-.passive-income-inline span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.capital-state-inline { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: end; }
+.capital-state-inline div { min-width: 0; }
+.capital-state-inline strong { color: #49605a; display: block; font: 600 22px/1.05 'Fraunces', serif; margin-bottom: 7px; }
+.capital-state-inline div:last-child strong { color: #34785c; }
+.capital-state-inline span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chart-card { margin-top: 14px; padding: 21px 22px 16px; }
 .text-button { color: #39745e; background: transparent; border: 0; font-size: 12px; font-weight: 700; padding: 5px 0; }
 .chart-layout { display: grid; grid-template-columns: minmax(0, 1fr) 194px; gap: 25px; margin-top: 13px; }

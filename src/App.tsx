@@ -79,13 +79,13 @@ function MetricCard({ eyebrow, value, detail, tone = 'default' }: {
   )
 }
 
-function PassiveIncomeCard({ month, value, ytd }: { month: string; value: number; ytd: number }) {
+function CapitalStateCard({ deadCapital, productiveCapital }: { deadCapital: number; productiveCapital: number }) {
   return (
-    <article className="metric-card passive-income-card">
-      <p>Ingresos pasivos</p>
-      <div className="passive-income-inline">
-        <div><strong>{formatMoney(value)}</strong><span>{month}</span></div>
-        <div><strong>{formatMoney(ytd)}</strong><span>YTD</span></div>
+    <article className="metric-card capital-state-card">
+      <p>Uso del capital</p>
+      <div className="capital-state-inline">
+        <div><strong>{formatMoney(deadCapital)}</strong><span>Capital muerto</span></div>
+        <div><strong>{formatMoney(productiveCapital)}</strong><span>Generando</span></div>
       </div>
     </article>
   )
@@ -255,9 +255,16 @@ function Dashboard({ onOpenClosing }: { onOpenClosing: () => void }) {
   const { snapshots, summary } = dashboard
   const latestMonth = formatMonth(summary.latestMonth)
   const hasComparison = summary.monthlyChange !== undefined && summary.monthlyChangePercent !== undefined
+  const latestSnapshot = snapshots.at(-1)!
   const selectedSnapshot = snapshots.find((snapshot) => snapshot.periodEnd === selectedPeriodEnd) ?? snapshots.at(-1)!
   const selectedMonthName = monthName(selectedSnapshot.month)
   const cashGeneratedTotal = snapshots.reduce((sum, snapshot) => sum + snapshot.cashFromYields, 0)
+  const deadCapital = latestSnapshot.assetBreakdown
+    .filter((asset) => asset.key === 'caixaCash' || asset.key === 'tradeRepublicCash')
+    .reduce((sum, asset) => sum + asset.value, 0)
+  const productiveCapital = latestSnapshot.assetBreakdown
+    .filter((asset) => asset.key !== 'caixaCash' && asset.key !== 'tradeRepublicCash')
+    .reduce((sum, asset) => sum + asset.value, 0)
   const selectedYear = selectedSnapshot.month.slice(0, 4)
   const investedGeneratedMonth = selectedSnapshot.marketChange ?? selectedSnapshot.investedGrowth
   const investedGeneratedYtd = snapshots
@@ -275,7 +282,7 @@ function Dashboard({ onOpenClosing }: { onOpenClosing: () => void }) {
         <MetricCard eyebrow="Patrimonio actual" value={formatMoney(summary.currentNetWorth)} detail={`Último cierre · ${latestMonth}`} />
         <MetricCard eyebrow="Cambio este mes" value={hasComparison ? `${summary.monthlyChange! >= 0 ? '+' : ''}${formatMoney(summary.monthlyChange!)}` : 'Pendiente'} detail={hasComparison ? `${summary.monthlyChangePercent! >= 0 ? '+' : ''}${summary.monthlyChangePercent!.toFixed(2)}% vs cierre anterior` : 'Necesitamos dos cierres para comparar'} tone={summary.monthlyChange !== undefined && summary.monthlyChange >= 0 ? 'positive' : 'default'} />
         <MetricCard eyebrow="Cambio por mercado" value={summary.marketChange === undefined ? 'Pendiente' : formatSignedMoney(summary.marketChange)} detail={summary.marketChange === 0 && summary.latestMonth === '2026-05' ? 'Baseline de partida' : 'RV y cripto sin aportaciones'} tone={summary.marketChange !== undefined && summary.marketChange >= 0 ? 'positive' : 'default'} />
-        <PassiveIncomeCard month={latestMonth} value={summary.passiveIncome} ytd={summary.passiveIncomeYtd} />
+        <CapitalStateCard deadCapital={deadCapital} productiveCapital={productiveCapital} />
       </section>
 
       <section className="chart-card">
