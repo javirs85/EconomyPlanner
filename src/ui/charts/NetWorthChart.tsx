@@ -34,6 +34,30 @@ interface ReturnsTooltipProps {
   payload?: Array<{ payload: MonthlyOriginStack, dataKey?: string | number }>
 }
 
+interface ReturnDotProps {
+  cx?: number
+  cy?: number
+  payload?: MonthlyOriginStack
+}
+
+function returnLineColor(value: number) {
+  return value < 0 ? '#c05f58' : '#3f7b5e'
+}
+
+function returnGradientOffset(data: MonthlyOriginStack[], dataKey: 'investedGrowth' | 'cashFromYields') {
+  const values = data.map((snapshot) => snapshot[dataKey])
+  const min = Math.min(...values, 0)
+  const max = Math.max(...values, 0)
+  if (max <= 0) return 0
+  if (min >= 0) return 100
+  return max / (max - min) * 100
+}
+
+function ReturnDot({ cx, cy, payload }: ReturnDotProps) {
+  if (cx === undefined || cy === undefined || !payload) return null
+  return <circle cx={cx} cy={cy} fill={returnLineColor(payload.investedGrowth)} r={2.4} strokeWidth={0} />
+}
+
 function ChartTooltip({ active, payload }: TooltipProps) {
   if (!active || !payload?.length) return null
 
@@ -251,10 +275,24 @@ function MiniReturnLineChart({
   showXAxis: boolean
   yearBoundaries: MonthlyOriginStack[]
 }) {
+  const gradientId = `return-line-${dataKey}`
+  const gradientOffset = returnGradientOffset(data, dataKey)
+  const stroke = dataKey === 'investedGrowth' ? `url(#${gradientId})` : color
+
   return (
     <div className="returns-mini-chart">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
+          {dataKey === 'investedGrowth' && (
+            <defs>
+              <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stopColor="#3f7b5e" />
+                <stop offset={`${gradientOffset}%`} stopColor="#3f7b5e" />
+                <stop offset={`${gradientOffset}%`} stopColor="#c05f58" />
+                <stop offset="100%" stopColor="#c05f58" />
+              </linearGradient>
+            </defs>
+          )}
           <CartesianGrid vertical={false} stroke="#eef2ef" />
           <XAxis
             axisLine={false}
@@ -272,7 +310,8 @@ function MiniReturnLineChart({
             width={56}
           />
           <Tooltip content={<ReturnsTooltip />} cursor={{ stroke: '#d8e1dc', strokeWidth: 1 }} />
-          <Line dataKey={dataKey} type="monotone" stroke={color} strokeWidth={2.2} dot={{ r: 2.4, strokeWidth: 0 }} activeDot={{ r: 4, strokeWidth: 0 }} />
+          {dataKey === 'investedGrowth' && <ReferenceLine y={0} stroke="#d9c4c1" strokeDasharray="3 4" strokeWidth={1} />}
+          <Line dataKey={dataKey} type="monotone" stroke={stroke} strokeWidth={2.2} dot={dataKey === 'investedGrowth' ? <ReturnDot /> : { r: 2.4, strokeWidth: 0 }} activeDot={{ r: 4, strokeWidth: 0 }} />
           {yearBoundaries.map((snapshot) => (
             <ReferenceLine
               key={`${dataKey}-year-boundary-${snapshot.month}`}
