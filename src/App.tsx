@@ -57,10 +57,24 @@ type PieAsset = {
   label: string
   value: number
   color: string
+  isGap?: boolean
 }
 
 function pieAssetsFromBreakdown(assets: MonthlyOriginStack['assetBreakdown']): PieAsset[] {
-  return assets.flatMap((asset) => {
+  const visibleAssets = assets.filter((asset) => asset.value > 0)
+  const total = visibleAssets.reduce((sum, asset) => sum + asset.value, 0)
+  const gapValue = total * 0.003
+
+  return visibleAssets.flatMap((asset) => {
+    const gap = {
+      key: `${asset.key}Gap`,
+      groupKey: '__gap__',
+      label: '',
+      value: gapValue,
+      color: '#fff',
+      isGap: true,
+    }
+
     if (asset.key !== 'tradeRepublicEquity') {
       return [{
         key: asset.key,
@@ -68,7 +82,7 @@ function pieAssetsFromBreakdown(assets: MonthlyOriginStack['assetBreakdown']): P
         label: asset.label,
         value: asset.value,
         color: assetColors[asset.key],
-      }]
+      }, gap]
     }
 
     const principal = Math.max(0, asset.principal ?? asset.value)
@@ -80,7 +94,7 @@ function pieAssetsFromBreakdown(assets: MonthlyOriginStack['assetBreakdown']): P
         label: asset.label,
         value: asset.value,
         color: assetColors.tradeRepublicEquity,
-      }]
+      }, gap]
     }
 
     return [
@@ -98,8 +112,9 @@ function pieAssetsFromBreakdown(assets: MonthlyOriginStack['assetBreakdown']): P
         value: growth,
         color: assetColors.tradeRepublicEquityGrowth,
       },
+      gap,
     ]
-  }).filter((asset) => asset.value > 0)
+  })
 }
 
 function formatMonth(month: string) {
@@ -183,12 +198,12 @@ function AssetPieCard({ snapshot }: { snapshot: MonthlyOriginStack }) {
                 dataKey="value"
                 innerRadius="40%"
                 nameKey="label"
-                onMouseEnter={(_, index) => setActiveAssetKey(pieAssets[index]?.groupKey)}
+                onMouseEnter={(_, index) => setActiveAssetKey(pieAssets[index]?.isGap ? undefined : pieAssets[index]?.groupKey)}
                 outerRadius="96%"
                 paddingAngle={0}
                 stroke="none"
               >
-                {pieAssets.map((asset) => <Cell key={asset.key} fill={asset.color} opacity={!activeAssetKey || activeAssetKey === asset.groupKey ? 1 : 0.42} stroke="none" />)}
+                {pieAssets.map((asset) => <Cell key={asset.key} fill={asset.color} opacity={asset.isGap || !activeAssetKey || activeAssetKey === asset.groupKey ? 1 : 0.42} stroke="none" style={asset.isGap ? { pointerEvents: 'none' } : undefined} />)}
               </Pie>
             </PieChart>
           </ResponsiveContainer>
