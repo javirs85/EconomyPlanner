@@ -12,7 +12,7 @@ import {
 } from './application/dashboardQueries/dashboard'
 import type { IncomeBreakdownItem, MonthlyOriginStack } from './domain/snapshots/types'
 import { formatMoney } from './shared/money/formatMoney'
-import { NetWorthChart } from './ui/charts/NetWorthChart'
+import { GeneratedReturnsChart, NetWorthChart } from './ui/charts/NetWorthChart'
 import { ImportsPage } from './ui/pages/ImportsPage'
 import { HistoricalMigrationPage } from './ui/pages/HistoricalMigrationPage'
 import './App.css'
@@ -253,13 +253,12 @@ function Dashboard({ onOpenClosing }: { onOpenClosing: () => void }) {
           <div><p className="eyebrow">Evolución mensual real</p><h2>Dónde está tu patrimonio</h2><p>Los cierres guardados alimentan este gráfico. El histórico anterior a mayo de 2026 parte de una estimación del 10% de revalorización.</p></div>
         </div>
         <div className="chart-layout">
-          <div className="chart-area"><NetWorthChart data={snapshots} selectedPeriodEnd={selectedSnapshot.periodEnd} onSelectSnapshot={(snapshot) => setSelectedPeriodEnd(snapshot.periodEnd)} /></div>
+          <div className="chart-main-column">
+            <div className="chart-area"><NetWorthChart data={snapshots} selectedPeriodEnd={selectedSnapshot.periodEnd} onSelectSnapshot={(snapshot) => setSelectedPeriodEnd(snapshot.periodEnd)} /></div>
+            <div className="returns-chart-heading"><span>Beneficios acumulados y realizados</span><i /><b>Invertido generado</b><i /><b>Cash generado</b></div>
+            <div className="returns-chart-area"><GeneratedReturnsChart data={snapshots} /></div>
+          </div>
           <div className="stack-legend">{stackLegend.map((item) => <div className="legend-row" key={item.label}><span className="legend-swatch" style={{ backgroundColor: item.color }} /><div><strong>{item.label}</strong><small>{item.detail}</small></div></div>)}</div>
-        </div>
-        <div className="origin-legend">
-          <span><i className="historical" />Histórico visual desaturado</span>
-          <span><i className="baseline" />Baseline fiable desde mayo</span>
-          <span><i className="tracked" />Seguimiento real posterior</span>
         </div>
       </section>
 

@@ -3,6 +3,8 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  Line,
+  LineChart,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -18,7 +20,16 @@ interface NetWorthChartProps {
   onSelectSnapshot: (snapshot: MonthlyOriginStack) => void
 }
 
+interface ReturnsChartProps {
+  data: MonthlyOriginStack[]
+}
+
 interface TooltipProps {
+  active?: boolean
+  payload?: Array<{ payload: MonthlyOriginStack }>
+}
+
+interface ReturnsTooltipProps {
   active?: boolean
   payload?: Array<{ payload: MonthlyOriginStack }>
 }
@@ -48,6 +59,21 @@ function ChartTooltip({ active, payload }: TooltipProps) {
             </>
           )}
         <div><dt>Inmobiliario aportado</dt><dd>{formatMoney(month.realEstatePrincipal)}</dd></div>
+      </dl>
+    </div>
+  )
+}
+
+function ReturnsTooltip({ active, payload }: ReturnsTooltipProps) {
+  if (!active || !payload?.length) return null
+
+  const month = payload[0].payload
+  return (
+    <div className="chart-tooltip compact-tooltip">
+      <p>{month.label}</p>
+      <dl>
+        <div><dt>Invertido generado</dt><dd>{formatMoney(month.investedGrowth)}</dd></div>
+        <div><dt>Cash generado</dt><dd>{formatMoney(month.cashFromYields)}</dd></div>
       </dl>
     </div>
   )
@@ -178,6 +204,39 @@ export function NetWorthChart({ data, selectedPeriodEnd, onSelectSnapshot }: Net
           />
         ))}
       </BarChart>
+    </ResponsiveContainer>
+  )
+}
+
+export function GeneratedReturnsChart({ data }: ReturnsChartProps) {
+  const labelsByPeriodEnd = new Map(data.map((snapshot) => [snapshot.periodEnd, snapshot.label]))
+  const yearBoundaries = data.filter((snapshot, index) => index > 0 && snapshot.month.slice(5, 7) === '01')
+
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <LineChart data={data} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
+        <CartesianGrid vertical={false} stroke="#eef2ef" />
+        <XAxis dataKey="periodEnd" tickFormatter={(periodEnd) => labelsByPeriodEnd.get(periodEnd) ?? ''} axisLine={false} tickLine={false} tick={{ fill: '#8a958f', fontSize: 11 }} />
+        <YAxis
+          axisLine={false}
+          tickLine={false}
+          tick={{ fill: '#8a958f', fontSize: 11 }}
+          tickFormatter={(value: number) => formatMoney(value, true)}
+          width={56}
+        />
+        <Tooltip content={<ReturnsTooltip />} cursor={{ stroke: '#d8e1dc', strokeWidth: 1 }} />
+        <Line dataKey="investedGrowth" name="Invertido generado" type="monotone" stroke="#3f7b5e" strokeWidth={2.2} dot={{ r: 2.4, strokeWidth: 0 }} activeDot={{ r: 4, strokeWidth: 0 }} />
+        <Line dataKey="cashFromYields" name="Cash generado" type="monotone" stroke="#86b6db" strokeWidth={2.2} dot={{ r: 2.4, strokeWidth: 0 }} activeDot={{ r: 4, strokeWidth: 0 }} />
+        {yearBoundaries.map((snapshot) => (
+          <ReferenceLine
+            key={`returns-year-boundary-${snapshot.month}`}
+            x={snapshot.periodEnd}
+            stroke="#c4d0ca"
+            strokeDasharray="2 4"
+            strokeWidth={1}
+          />
+        ))}
+      </LineChart>
     </ResponsiveContainer>
   )
 }
