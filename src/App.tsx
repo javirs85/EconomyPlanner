@@ -91,10 +91,9 @@ function PassiveIncomeCard({ month, value, ytd }: { month: string; value: number
   )
 }
 
-function CashGeneratedKpi({ month, value, ytd, total }: { month: string; value: number; ytd: number; total: number }) {
+function CashGeneratedKpi({ value, ytd, total }: { value: number; ytd: number; total: number }) {
   return (
     <article className="cash-generated-kpi">
-      <p>Cash generado</p>
       <div>
         <span>Este mes</span>
         <strong>{formatMoney(value)}</strong>
@@ -107,7 +106,6 @@ function CashGeneratedKpi({ month, value, ytd, total }: { month: string; value: 
         <span>Total</span>
         <strong>{formatMoney(total)}</strong>
       </div>
-      <small>{month}</small>
     </article>
   )
 }
@@ -254,7 +252,6 @@ function Dashboard({ onOpenClosing }: { onOpenClosing: () => void }) {
   const latestMonth = formatMonth(summary.latestMonth)
   const hasComparison = summary.monthlyChange !== undefined && summary.monthlyChangePercent !== undefined
   const selectedSnapshot = snapshots.find((snapshot) => snapshot.periodEnd === selectedPeriodEnd) ?? snapshots.at(-1)!
-  const selectedMonth = formatMonth(selectedSnapshot.month)
   const cashGeneratedTotal = snapshots.reduce((sum, snapshot) => sum + snapshot.cashFromYields, 0)
 
   return (
@@ -283,7 +280,7 @@ function Dashboard({ onOpenClosing }: { onOpenClosing: () => void }) {
           </div>
           <div className="chart-side">
             <div className="stack-legend">{stackLegend.map((item) => <div className="legend-row" key={item.label}><span className="legend-swatch" style={{ backgroundColor: item.color }} /><div><strong>{item.label}</strong><small>{item.detail}</small></div></div>)}</div>
-            <CashGeneratedKpi month={selectedMonth} value={selectedSnapshot.cashFromYields} ytd={selectedSnapshot.passiveIncomeYtd} total={cashGeneratedTotal} />
+            <CashGeneratedKpi value={selectedSnapshot.cashFromYields} ytd={selectedSnapshot.passiveIncomeYtd} total={cashGeneratedTotal} />
           </div>
         </div>
       </section>

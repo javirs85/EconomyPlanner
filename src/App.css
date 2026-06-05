@@ -53,12 +53,11 @@ h2 { color: #263a33; font: 600 23px/1.15 'Fraunces', serif; margin: 0 0 7px; }
 .legend-row strong, .legend-row small { display: block; }
 .legend-row strong { color: #42534d; font-size: 11px; }
 .legend-row small { color: #99a39f; font-size: 10px; margin-top: 2px; }
-.cash-generated-kpi { align-self: end; padding: 13px 14px; border: 1px solid #dfe9e4; border-radius: 8px; background: #f8fbf9; }
-.cash-generated-kpi p { margin: 0 0 10px; color: #557168; font-size: 10px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; }
-.cash-generated-kpi div { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid #edf1ee; }
-.cash-generated-kpi span { color: #8b9893; font-size: 10px; font-weight: 700; text-transform: uppercase; }
-.cash-generated-kpi strong { color: #2f5f91; font: 600 15px/1 'Fraunces', serif; text-align: right; }
-.cash-generated-kpi small { display: block; margin-top: 8px; color: #9aa49f; font-size: 10px; }
+.cash-generated-kpi { align-self: end; padding: 7px 11px; border: 1px solid #d5e6f2; border-radius: 8px; background: #f4f9fd; }
+.cash-generated-kpi div { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; }
+.cash-generated-kpi div + div { border-top: 1px solid #e0edf6; }
+.cash-generated-kpi span { color: #7190a6; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+.cash-generated-kpi strong { color: #2f6f9d; font: 600 15px/1 'Fraunces', serif; text-align: right; }
 .chart-tooltip { min-width: 205px; padding: 13px; border: 1px solid #e0e7e3; border-radius: 9px; background: rgba(255, 255, 255, .97); box-shadow: 0 8px 25px rgba(47, 73, 63, .12); }
 .chart-tooltip p { margin: 0 0 3px; color: #7b8983; font-size: 11px; text-transform: uppercase; }
 .chart-tooltip > strong { color: #243a32; font: 600 20px/1.1 'Fraunces', serif; }
