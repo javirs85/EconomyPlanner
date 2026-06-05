@@ -266,7 +266,9 @@ function Dashboard({ onOpenClosing }: { onOpenClosing: () => void }) {
     .filter((asset) => asset.key !== 'caixaCash' && asset.key !== 'tradeRepublicCash')
     .reduce((sum, asset) => sum + asset.value, 0)
   const selectedYear = selectedSnapshot.month.slice(0, 4)
-  const investedGeneratedMonth = selectedSnapshot.marketChange ?? selectedSnapshot.investedGrowth
+  const investedGeneratedMonth = selectedSnapshot.snapshotOrigin === 'baseline'
+    ? selectedSnapshot.investedGrowth
+    : selectedSnapshot.marketChange ?? selectedSnapshot.investedGrowth
   const investedGeneratedYtd = snapshots
     .filter((snapshot) => snapshot.month.slice(0, 4) === selectedYear && snapshot.month <= selectedSnapshot.month)
     .reduce((sum, snapshot) => sum + (snapshot.marketChange ?? 0), 0) || selectedSnapshot.investedGrowth
