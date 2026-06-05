@@ -30,14 +30,18 @@ const assetColors: Record<string, string> = {
   caixaCash: '#2d6f9f',
   tradeRepublicCash: '#4f8fb5',
   tradeRepublicEquity: '#3c7d57',
-  tradeRepublicEquityGrowth: '#7eb892',
+  tradeRepublicEquityGrowth: '#4d8a65',
   myInvestorEquity: '#5e9f72',
+  myInvestorEquityGrowth: '#70ad83',
   tradeRepublicFixedIncome: '#7a8582',
   myInvestorFixedIncome: '#a8b1ad',
   tradeRepublicCrypto: '#73559d',
+  tradeRepublicCryptoGrowth: '#8469aa',
   myInvestorCrypto: '#9070b7',
+  myInvestorCryptoGrowth: '#9e82c3',
   criptanCrypto: '#b19ad0',
   urbanitaeRealEstate: '#c48a67',
+  urbanitaeRealEstateGrowth: '#d09a78',
 }
 
 const incomeColors: Record<string, string> = {
@@ -66,6 +70,8 @@ function pieAssetsFromBreakdown(assets: MonthlyOriginStack['assetBreakdown']): P
   const gapValue = total * 0.003
 
   return visibleAssets.flatMap((asset) => {
+    const baseColor = assetColors[asset.key]
+    const growthColor = assetColors[`${asset.key}Growth`] ?? baseColor
     const gap = {
       key: `${asset.key}Gap`,
       groupKey: '__gap__',
@@ -75,42 +81,37 @@ function pieAssetsFromBreakdown(assets: MonthlyOriginStack['assetBreakdown']): P
       isGap: true,
     }
 
-    if (asset.key !== 'tradeRepublicEquity') {
+    const canSplit = asset.principal !== undefined
+      && asset.growth !== undefined
+      && asset.growth > 0
+      && asset.principal > 0
+    if (!canSplit) {
       return [{
         key: asset.key,
         groupKey: asset.key,
         label: asset.label,
         value: asset.value,
-        color: assetColors[asset.key],
+        color: baseColor,
       }, gap]
     }
 
-    const principal = Math.max(0, asset.principal ?? asset.value)
+    const principal = Math.min(asset.value, Math.max(0, asset.principal ?? asset.value))
     const growth = Math.max(0, asset.value - principal)
-    if (growth <= 0 || principal <= 0) {
-      return [{
-        key: asset.key,
-        groupKey: asset.key,
-        label: asset.label,
-        value: asset.value,
-        color: assetColors.tradeRepublicEquity,
-      }, gap]
-    }
 
     return [
       {
-        key: 'tradeRepublicEquityPrincipal',
+        key: `${asset.key}Principal`,
         groupKey: asset.key,
-        label: 'TR renta variable aportado',
+        label: `${asset.label} aportado`,
         value: principal,
-        color: assetColors.tradeRepublicEquity,
+        color: baseColor,
       },
       {
-        key: 'tradeRepublicEquityGrowth',
+        key: `${asset.key}Growth`,
         groupKey: asset.key,
-        label: 'TR renta variable beneficio',
+        label: `${asset.label} beneficio`,
         value: growth,
-        color: assetColors.tradeRepublicEquityGrowth,
+        color: growthColor,
       },
       gap,
     ]
