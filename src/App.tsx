@@ -124,7 +124,7 @@ function AssetPieCard({ snapshot }: { snapshot: MonthlyOriginStack }) {
       <div className="selected-allocation-body">
         <div className="selected-pie-wrap">
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
+            <PieChart accessibilityLayer={false}>
               <Pie
                 data={visibleAssets}
                 dataKey="value"

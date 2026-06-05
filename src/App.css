@@ -89,6 +89,7 @@ h2 { color: #263a33; font: 600 23px/1.15 'Fraunces', serif; margin: 0 0 7px; }
 .selected-allocation-card { display: flex; min-height: 480px; flex-direction: column; overflow: visible; }
 .selected-allocation-body { display: grid; grid-template-columns: minmax(330px, 1fr) minmax(0, 1.08fr); align-items: center; gap: 30px; min-height: 0; margin-top: 12px; }
 .selected-pie-wrap { position: relative; aspect-ratio: 1; width: min(100%, 430px); margin: 0 auto; }
+.selected-pie-wrap .recharts-wrapper, .selected-pie-wrap .recharts-surface, .selected-pie-wrap svg, .selected-pie-wrap *:focus { outline: none !important; }
 .selected-pie-wrap .recharts-sector { outline: none; stroke: none; stroke-width: 0; }
 .selected-pie-wrap .recharts-sector:focus { outline: none; }
 .origin-pill { display: inline-block; margin-top: 2px; padding: 4px 8px; border-radius: 20px; color: #74817c; background: #eef1ef; font-size: 9px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
