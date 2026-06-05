@@ -1,5 +1,6 @@
 import { parseTradeRepublicCsv } from '../../server/tradeRepublicParser.js'
-import { getDashboard, getMonthlyClosing, getYearClosingStatus, importTransactions, exploreTransactions, latestImportedTransactionDate, saveMonthlyClosing } from '../_economyData.js'
+import { parseHistoricalSnapshots } from '../../server/historicalMigration.js'
+import { getDashboard, getMonthlyClosing, getYearClosingStatus, importHistoricalSnapshots, importTransactions, exploreTransactions, latestImportedTransactionDate, saveMonthlyClosing } from '../_economyData.js'
 import { readData, writeData } from '../_storage.js'
 
 function json(payload, status = 200) {
@@ -75,9 +76,16 @@ export async function onRequest(context) {
       return json(result)
     }
 
+    if (request.method === 'POST' && path === '/api/historical-migration/import') {
+      const { text } = await readJson(request)
+      if (typeof text !== 'string' || !text.trim()) throw new Error('Falta la tabla historica.')
+      const result = importHistoricalSnapshots(data, parseHistoricalSnapshots(text))
+      await writeData(env, data)
+      return json(result)
+    }
+
     return json({ error: 'Ruta no encontrada.' }, 404)
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : 'Error inesperado.' }, 400)
   }
 }
-

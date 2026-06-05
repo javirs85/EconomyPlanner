@@ -229,6 +229,24 @@ export function saveMonthlyClosing(data, snapshot) {
   return getMonthlyClosing(data, nextSnapshot)
 }
 
+export function importHistoricalSnapshots(data, snapshots) {
+  const existingMonths = new Set(data.monthlySnapshots.map(({ month }) => month))
+  const imported = []
+  const skipped = []
+
+  for (const snapshot of snapshots) {
+    if (existingMonths.has(snapshot.month)) {
+      skipped.push(snapshot.month)
+      continue
+    }
+    saveMonthlyClosing(data, snapshot)
+    existingMonths.add(snapshot.month)
+    imported.push(snapshot.month)
+  }
+
+  return { imported, skipped }
+}
+
 function monthPeriod(year, monthIndex) {
   const month = String(monthIndex + 1).padStart(2, '0')
   const nextMonth = new Date(Date.UTC(year, monthIndex + 1, 3))

@@ -1,5 +1,6 @@
 import { createServer } from 'node:http'
-import { exploreTransactions, getDashboard, getMonthlyClosing, getYearClosingStatus, importTransactions, latestImportedTransactionDate, saveMonthlyClosing } from './database.js'
+import { exploreTransactions, getDashboard, getMonthlyClosing, getYearClosingStatus, importHistoricalSnapshots, importTransactions, latestImportedTransactionDate, saveMonthlyClosing } from './database.js'
+import { parseHistoricalSnapshots } from './historicalMigration.js'
 import { parseTradeRepublicCsv } from './tradeRepublicParser.js'
 
 const port = 5174
@@ -80,6 +81,13 @@ createServer(async (request, response) => {
         throw new Error('Falta el nombre, rango de cobertura o contenido del CSV.')
       }
       sendJson(response, 200, importTransactions({ fileName, coverageStart, coverageEnd, ...parseTradeRepublicCsv(csv) }))
+      return
+    }
+
+    if (request.method === 'POST' && url.pathname === '/api/historical-migration/import') {
+      const { text } = await readJson(request)
+      if (typeof text !== 'string' || !text.trim()) throw new Error('Falta la tabla historica.')
+      sendJson(response, 200, importHistoricalSnapshots(parseHistoricalSnapshots(text)))
       return
     }
 
