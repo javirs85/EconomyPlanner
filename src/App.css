@@ -60,6 +60,9 @@ h2 { color: #263a33; font: 600 23px/1.15 'Fraunces', serif; margin: 0 0 7px; }
 .generated-kpi div + div { border-top: 1px solid var(--generated-kpi-line); }
 .generated-kpi span { color: var(--generated-kpi-muted); font-size: 10px; font-weight: 700; text-transform: uppercase; }
 .generated-kpi strong { color: var(--generated-kpi-strong); font: 600 15px/1 'Fraunces', serif; text-align: right; }
+.generated-kpi.compact-single { padding-block: 11px; }
+.generated-kpi.compact-single div { padding: 0; }
+.generated-kpi.compact-single strong { font-size: 19px; }
 .generated-kpi.green { --generated-kpi-line: #dcebe2; --generated-kpi-muted: #739381; --generated-kpi-strong: #3f7b5e; border: 1px solid #d3e5da; background: #f4faf6; }
 .generated-kpi.blue { --generated-kpi-line: #e0edf6; --generated-kpi-muted: #7190a6; --generated-kpi-strong: #2f6f9d; border: 1px solid #d5e6f2; background: #f4f9fd; }
 .chart-tooltip { min-width: 205px; padding: 13px; border: 1px solid #e0e7e3; border-radius: 9px; background: rgba(255, 255, 255, .97); box-shadow: 0 8px 25px rgba(47, 73, 63, .12); }

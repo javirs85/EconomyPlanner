@@ -164,6 +164,17 @@ function monthName(month: string) {
 }
 
 function GeneratedKpi({ month, tone, value, ytd, total }: { month: string; tone: 'green' | 'blue'; value: number; ytd: number; total: number }) {
+  if (tone === 'green') {
+    return (
+      <article className={`generated-kpi ${tone} compact-single`}>
+        <div>
+          <span>Valor actual</span>
+          <strong>{formatMoney(total)}</strong>
+        </div>
+      </article>
+    )
+  }
+
   return (
     <article className={`generated-kpi ${tone}`}>
       <div>
