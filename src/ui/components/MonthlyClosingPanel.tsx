@@ -19,20 +19,20 @@ const balanceSections = [
     fields: [
       ['tradeRepublicCashBalance', 'TR CC'],
       ['tradeRepublicEquityValue', 'TR RV valor'],
-      ['tradeRepublicEquityPrincipal', 'TR RV aportado'],
+      ['tradeRepublicEquityProfit', 'TR RV beneficio'],
       ['tradeRepublicFixedIncomeValue', 'TR RF vivo'],
       ['tradeRepublicCryptoValue', 'TR Cripto valor'],
-      ['tradeRepublicCryptoPrincipal', 'TR Cripto aportado'],
+      ['tradeRepublicCryptoProfit', 'TR Cripto beneficio'],
     ] as const,
   },
   {
     title: 'MyInvestor',
     fields: [
       ['myInvestorEquityValue', 'RV valor'],
-      ['myInvestorEquityPrincipal', 'RV aportado'],
+      ['myInvestorEquityProfit', 'RV beneficio'],
       ['myInvestorFixedIncomeValue', 'RF vivo'],
       ['myInvestorCryptoValue', 'Cripto valor'],
-      ['myInvestorCryptoPrincipal', 'Cripto aportado'],
+      ['myInvestorCryptoProfit', 'Cripto beneficio'],
     ] as const,
   },
   {
@@ -40,40 +40,46 @@ const balanceSections = [
     fields: [
       ['criptanCryptoValue', 'Criptan'],
       ['urbanitaeRealEstateValue', 'Urbanitae valor'],
-      ['urbanitaeRealEstatePrincipal', 'Urbanitae aportado'],
+      ['urbanitaeRealEstateProfit', 'Urbanitae beneficio'],
     ] as const,
   },
 ] as const
 
 const balanceFields = balanceSections.flatMap((section) => section.fields.map(([field]) => field))
-const principalFields = new Set<string>([
-  'tradeRepublicEquityPrincipal',
-  'tradeRepublicCryptoPrincipal',
-  'myInvestorEquityPrincipal',
-  'myInvestorCryptoPrincipal',
-  'urbanitaeRealEstatePrincipal',
+const profitFields = new Set<string>([
+  'tradeRepublicEquityProfit',
+  'tradeRepublicCryptoProfit',
+  'myInvestorEquityProfit',
+  'myInvestorCryptoProfit',
+  'urbanitaeRealEstateProfit',
 ])
-const netWorthFields = balanceFields.filter((field) => !principalFields.has(field))
+const netWorthFields = balanceFields.filter((field) => !profitFields.has(field))
 
 type BalanceField = typeof balanceFields[number]
+type PrincipalField = 'tradeRepublicEquityPrincipal' | 'tradeRepublicCryptoPrincipal' | 'myInvestorEquityPrincipal' | 'myInvestorCryptoPrincipal' | 'urbanitaeRealEstatePrincipal'
 type FlowField = 'myInvestorEquityExternalFlow' | 'myInvestorFixedIncomeExternalFlow' | 'myInvestorCryptoExternalFlow' | 'criptanExternalFlow' | 'urbanitaeExternalFlow'
-type FormValues = Record<BalanceField | FlowField, string>
+type FormValues = Record<BalanceField | PrincipalField | FlowField, string>
 
 const emptyValues: FormValues = {
   caixaBalance: '',
   tradeRepublicCashBalance: '',
   tradeRepublicEquityValue: '',
+  tradeRepublicEquityProfit: '',
   tradeRepublicEquityPrincipal: '',
   tradeRepublicFixedIncomeValue: '0',
   tradeRepublicCryptoValue: '',
+  tradeRepublicCryptoProfit: '',
   tradeRepublicCryptoPrincipal: '',
   myInvestorEquityValue: '',
+  myInvestorEquityProfit: '',
   myInvestorEquityPrincipal: '',
   myInvestorFixedIncomeValue: '0',
   myInvestorCryptoValue: '',
+  myInvestorCryptoProfit: '',
   myInvestorCryptoPrincipal: '',
   criptanCryptoValue: '',
   urbanitaeRealEstateValue: '',
+  urbanitaeRealEstateProfit: '',
   urbanitaeRealEstatePrincipal: '',
   myInvestorEquityExternalFlow: '0',
   myInvestorFixedIncomeExternalFlow: '0',
@@ -110,11 +116,29 @@ function formatInputNumber(value: number) {
   return String(Math.round((value + Number.EPSILON) * 100) / 100).replace('.', ',')
 }
 
+function snapshotProfit(snapshot: MonthlySnapshot, valueField: keyof MonthlySnapshot, principalField: keyof MonthlySnapshot) {
+  return Number(snapshot[valueField] ?? 0) - Number(snapshot[principalField] ?? snapshot[valueField] ?? 0)
+}
+
+function snapshotFieldValue(snapshot: MonthlySnapshot, field: BalanceField) {
+  if (field === 'tradeRepublicEquityProfit') return snapshotProfit(snapshot, 'tradeRepublicEquityValue', 'tradeRepublicEquityPrincipal')
+  if (field === 'tradeRepublicCryptoProfit') return snapshotProfit(snapshot, 'tradeRepublicCryptoValue', 'tradeRepublicCryptoPrincipal')
+  if (field === 'myInvestorEquityProfit') return snapshotProfit(snapshot, 'myInvestorEquityValue', 'myInvestorEquityPrincipal')
+  if (field === 'myInvestorCryptoProfit') return snapshotProfit(snapshot, 'myInvestorCryptoValue', 'myInvestorCryptoPrincipal')
+  if (field === 'urbanitaeRealEstateProfit') return snapshotProfit(snapshot, 'urbanitaeRealEstateValue', 'urbanitaeRealEstatePrincipal')
+  return Number(snapshot[field] ?? 0)
+}
+
 function snapshotToValues(snapshot: MonthlySnapshot): FormValues {
   return {
     ...Object.fromEntries(
-      balanceFields.map((key) => [key, formatInputNumber(Number(snapshot[key] ?? 0))]),
+      balanceFields.map((key) => [key, formatInputNumber(snapshotFieldValue(snapshot, key))]),
     ),
+    tradeRepublicEquityPrincipal: formatInputNumber(snapshot.tradeRepublicEquityPrincipal ?? snapshot.tradeRepublicEquityValue ?? 0),
+    tradeRepublicCryptoPrincipal: formatInputNumber(snapshot.tradeRepublicCryptoPrincipal ?? snapshot.tradeRepublicCryptoValue ?? 0),
+    myInvestorEquityPrincipal: formatInputNumber(snapshot.myInvestorEquityPrincipal ?? snapshot.myInvestorEquityValue ?? 0),
+    myInvestorCryptoPrincipal: formatInputNumber(snapshot.myInvestorCryptoPrincipal ?? snapshot.myInvestorCryptoValue ?? 0),
+    urbanitaeRealEstatePrincipal: formatInputNumber(snapshot.urbanitaeRealEstatePrincipal ?? snapshot.urbanitaeRealEstateValue ?? 0),
     myInvestorEquityExternalFlow: formatInputNumber(snapshot.myInvestorEquityExternalFlow ?? snapshot.myInvestorExternalFlow ?? 0),
     myInvestorFixedIncomeExternalFlow: formatInputNumber(snapshot.myInvestorFixedIncomeExternalFlow ?? 0),
     myInvestorCryptoExternalFlow: formatInputNumber(snapshot.myInvestorCryptoExternalFlow ?? 0),
@@ -123,21 +147,93 @@ function snapshotToValues(snapshot: MonthlySnapshot): FormValues {
   } as FormValues
 }
 
-function resolveSumExpression(value: string) {
+function resolveArithmeticExpression(value: string) {
   const normalized = value.replace(',', '.').trim()
-  if (!normalized.includes('+')) {
+  if (!/[+\-*/()]/.test(normalized.slice(1))) {
     const parsed = Number(normalized)
     return Number.isFinite(parsed) ? formatInputNumber(parsed) : value
   }
 
-  const terms = normalized.split('+').map((term) => term.trim())
-  if (terms.some((term) => !/^-?\d+(?:\.\d+)?$/.test(term))) return value
+  const parsed = parseExpression(normalized)
+  return parsed === undefined ? value : formatInputNumber(parsed)
+}
 
-  return formatInputNumber(terms.reduce((sum, term) => sum + Number(term), 0))
+function parseExpression(expression: string) {
+  let index = 0
+
+  function skipSpaces() {
+    while (expression[index] === ' ') index += 1
+  }
+
+  function parseNumber(): number | undefined {
+    skipSpaces()
+    const start = index
+    while (/\d|\./.test(expression[index] ?? '')) index += 1
+    if (start === index) return undefined
+    const value = Number(expression.slice(start, index))
+    return Number.isFinite(value) ? value : undefined
+  }
+
+  function parseFactor(): number | undefined {
+    skipSpaces()
+    if (expression[index] === '+') {
+      index += 1
+      return parseFactor()
+    }
+    if (expression[index] === '-') {
+      index += 1
+      const value: number | undefined = parseFactor()
+      return value === undefined ? undefined : -value
+    }
+    if (expression[index] === '(') {
+      index += 1
+      const value: number | undefined = parseAddSubtract()
+      skipSpaces()
+      if (expression[index] !== ')') return undefined
+      index += 1
+      return value
+    }
+    return parseNumber()
+  }
+
+  function parseMultiplyDivide(): number | undefined {
+    let value: number | undefined = parseFactor()
+    if (value === undefined) return undefined
+
+    while (true) {
+      skipSpaces()
+      const operator = expression[index]
+      if (operator !== '*' && operator !== '/') return value
+      index += 1
+      const right = parseFactor()
+      if (right === undefined) return undefined
+      if (operator === '/' && right === 0) return undefined
+      value = operator === '*' ? value * right : value / right
+    }
+  }
+
+  function parseAddSubtract(): number | undefined {
+    let value: number | undefined = parseMultiplyDivide()
+    if (value === undefined) return undefined
+
+    while (true) {
+      skipSpaces()
+      const operator = expression[index]
+      if (operator !== '+' && operator !== '-') return value
+      index += 1
+      const right = parseMultiplyDivide()
+      if (right === undefined) return undefined
+      value = operator === '+' ? value + right : value - right
+    }
+  }
+
+  const value = parseAddSubtract()
+  skipSpaces()
+  return value !== undefined && index === expression.length ? value : undefined
 }
 
 function numericValue(value: string) {
-  const resolved = resolveSumExpression(value)
+  const resolved = resolveArithmeticExpression(value)
   const parsed = Number(resolved.replace(',', '.'))
   return Number.isFinite(parsed) ? parsed : 0
 }
@@ -218,7 +314,7 @@ export function MonthlyClosingPanel({
   }
 
   function resolveValue(field: keyof FormValues) {
-    setValues((current) => ({ ...current, [field]: resolveSumExpression(current[field]) }))
+    setValues((current) => ({ ...current, [field]: resolveArithmeticExpression(current[field]) }))
   }
 
   function inputFor(field: keyof FormValues) {
@@ -235,13 +331,15 @@ export function MonthlyClosingPanel({
     }
   }
 
-  function profitBadge(valueField: keyof FormValues, principalField: keyof FormValues) {
-    const profit = profitFor(valueField, principalField)
-    return <small className={profit >= 0 ? 'pvp-profit positive' : 'pvp-profit negative'}>Beneficio {formatMoney(profit)}</small>
-  }
-
   function principalFor(field: keyof FormValues) {
-    if (principalInputsEditable) return numericValue(values[field])
+    if (principalInputsEditable) {
+      if (field === 'tradeRepublicEquityPrincipal') return numericValue(values.tradeRepublicEquityValue) - numericValue(values.tradeRepublicEquityProfit)
+      if (field === 'tradeRepublicCryptoPrincipal') return numericValue(values.tradeRepublicCryptoValue) - numericValue(values.tradeRepublicCryptoProfit)
+      if (field === 'myInvestorEquityPrincipal') return numericValue(values.myInvestorEquityValue) - numericValue(values.myInvestorEquityProfit)
+      if (field === 'myInvestorCryptoPrincipal') return numericValue(values.myInvestorCryptoValue) - numericValue(values.myInvestorCryptoProfit)
+      if (field === 'urbanitaeRealEstatePrincipal') return numericValue(values.urbanitaeRealEstateValue) - numericValue(values.urbanitaeRealEstateProfit)
+      return numericValue(values[field])
+    }
     if (field === 'tradeRepublicEquityPrincipal') {
       return Math.max(0, (previousSnapshot?.tradeRepublicEquityPrincipal ?? previousSnapshot?.tradeRepublicEquityValue ?? 0) + tradeRepublicFacts.tradeRepublicEquityFlow)
     }
@@ -272,6 +370,15 @@ export function MonthlyClosingPanel({
 
   function profitFor(valueField: keyof FormValues, principalField: keyof FormValues) {
     return numericValue(values[valueField]) - principalFor(principalField)
+  }
+
+  function profitForField(field: string) {
+    if (field === 'tradeRepublicEquityProfit') return profitFor('tradeRepublicEquityValue', 'tradeRepublicEquityPrincipal')
+    if (field === 'tradeRepublicCryptoProfit') return profitFor('tradeRepublicCryptoValue', 'tradeRepublicCryptoPrincipal')
+    if (field === 'myInvestorEquityProfit') return profitFor('myInvestorEquityValue', 'myInvestorEquityPrincipal')
+    if (field === 'myInvestorCryptoProfit') return profitFor('myInvestorCryptoValue', 'myInvestorCryptoPrincipal')
+    if (field === 'urbanitaeRealEstateProfit') return profitFor('urbanitaeRealEstateValue', 'urbanitaeRealEstatePrincipal')
+    return 0
   }
 
   async function submit(event: React.FormEvent) {
@@ -324,17 +431,12 @@ export function MonthlyClosingPanel({
                 <legend>{section.title}</legend>
                 <div className="closing-form-grid">
                   {section.fields.map(([field, label]) => (
-                    principalFields.has(field) && !principalInputsEditable
-                      ? <AutoPrincipalCard field={field} label={label} principal={principalFor(field)} key={field} />
+                    profitFields.has(field) && !principalInputsEditable
+                      ? <AutoProfitCard field={field} label={label} profit={profitForField(field)} key={field} />
                       : (
                         <label className="balance-input" key={field}>
-                          <span>{label}</span><small>{principalFields.has(field) ? 'Baseline editable' : 'Saldo de cierre'}</small>
+                          <span>{label}</span><small>{profitFields.has(field) ? 'Baseline editable' : 'Saldo de cierre'}</small>
                           <div><input min="0" {...inputFor(field)} /><b>EUR</b></div>
-                          {field === 'tradeRepublicEquityValue' && profitBadge('tradeRepublicEquityValue', 'tradeRepublicEquityPrincipal')}
-                          {field === 'tradeRepublicCryptoValue' && profitBadge('tradeRepublicCryptoValue', 'tradeRepublicCryptoPrincipal')}
-                          {field === 'myInvestorEquityValue' && profitBadge('myInvestorEquityValue', 'myInvestorEquityPrincipal')}
-                          {field === 'myInvestorCryptoValue' && profitBadge('myInvestorCryptoValue', 'myInvestorCryptoPrincipal')}
-                          {field === 'urbanitaeRealEstateValue' && profitBadge('urbanitaeRealEstateValue', 'urbanitaeRealEstatePrincipal')}
                         </label>
                       )
                   ))}
@@ -405,12 +507,12 @@ function DetectedFlow({ label, value }: { label: string, value: number }) {
   )
 }
 
-function AutoPrincipalCard({ field, label, principal }: { field: string, label: string, principal: number }) {
+function AutoProfitCard({ field, label, profit }: { field: string, label: string, profit: number }) {
   return (
     <div className="detected-flow auto-principal" data-field={field}>
       <span>{label}</span>
-      <small>Calculado: anterior + flow</small>
-      <strong>{formatMoney(principal)}</strong>
+      <small>Calculado: valor - aportado</small>
+      <strong>{formatMoney(profit)}</strong>
     </div>
   )
 }
