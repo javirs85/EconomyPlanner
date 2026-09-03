@@ -112,6 +112,28 @@ test('dashboard counts only external money as saving and includes fixed-income p
   assert.equal(dashboard.summary.netContribution, 20)
   assert.equal(dashboard.snapshots.at(-1).savingsBreakdown.total, 20)
   assert.equal(dashboard.summary.marketGrowth, 10)
+  assert.deepEqual({
+    equityBase: dashboard.snapshots.at(-1).equityBase,
+    equityGenerated: dashboard.snapshots.at(-1).equityGenerated,
+    cryptoBase: dashboard.snapshots.at(-1).cryptoBase,
+    cryptoGenerated: dashboard.snapshots.at(-1).cryptoGenerated,
+  }, {
+    equityBase: 180,
+    equityGenerated: 20,
+    cryptoBase: 100,
+    cryptoGenerated: 0,
+  })
+  assert.equal(
+    dashboard.snapshots.at(-1).cashFromSalary
+      + dashboard.snapshots.at(-1).cashFromYields
+      + dashboard.snapshots.at(-1).fixedIncome
+      + dashboard.snapshots.at(-1).equityBase
+      + dashboard.snapshots.at(-1).equityGenerated
+      + dashboard.snapshots.at(-1).cryptoBase
+      + dashboard.snapshots.at(-1).cryptoGenerated
+      + dashboard.snapshots.at(-1).realEstateValue,
+    dashboard.snapshots.at(-1).totalNetWorth,
+  )
 })
 
 test('classifies generated cash, investment flows, expenses, maturities and outbounds', () => {

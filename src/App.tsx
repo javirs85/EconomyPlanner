@@ -18,12 +18,14 @@ import { HistoricalMigrationPage } from './ui/pages/HistoricalMigrationPage'
 import './App.css'
 
 const stackLegend = [
-  { label: 'Inmobiliario aportado', detail: 'Capital bloqueado en Urbanitae', color: '#c48a67' },
-  { label: 'Invertido generado', detail: 'Crecimiento combinado de las inversiones', color: '#a5d2b7' },
-  { label: 'Invertido aportado', detail: 'Principal vivo en RV y cripto', color: '#3f7b5e' },
-  { label: 'Renta fija', detail: 'Valor actual invertido en RF', color: '#8d9692' },
-  { label: 'Cash generado', detail: 'Intereses y cupones', color: '#86b6db' },
   { label: 'Cash aportado', detail: 'Liquidez para el día a día', color: '#2f5f91' },
+  { label: 'Cash generado', detail: 'Intereses y cupones incluidos en el cash', color: '#86b6db' },
+  { label: 'Renta fija', detail: 'Valor actual en bonos', color: '#8d9692' },
+  { label: 'Renta variable', detail: 'Base del valor actual en RV', color: '#3f7b5e' },
+  { label: 'RV generada', detail: 'Plusvalía positiva incluida en su valor', color: '#a5d2b7' },
+  { label: 'Cripto', detail: 'Base del valor actual en cripto', color: '#73559d' },
+  { label: 'Cripto generada', detail: 'Plusvalía positiva incluida en su valor', color: '#b19ad0' },
+  { label: 'Urbanitae', detail: 'Valor actual inmobiliario', color: '#c48a67' },
 ]
 
 const assetColors: Record<string, string> = {

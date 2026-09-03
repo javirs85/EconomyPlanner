@@ -7,9 +7,18 @@ export interface MonthlyOriginStack {
   cashFromSalary: number
   cashFromYields: number
   fixedIncome: number
+  equityValue: number
+  equityGrowth: number
+  equityBase: number
+  equityGenerated: number
+  cryptoValue: number
+  cryptoGrowth: number
+  cryptoBase: number
+  cryptoGenerated: number
   investedPrincipal: number
   investedGrowth: number
   realEstatePrincipal: number
+  realEstateValue: number
   totalNetWorth: number
   monthlyChange?: number
   monthlyChangePercent?: number

@@ -230,6 +230,20 @@ function depositAsset({ key, category, label, value }) {
   }
 }
 
+function categoryChartSegments(assets, category, reliable) {
+  const categoryAssets = assets.filter((asset) => asset.category === category)
+  const value = categoryAssets.reduce((sum, asset) => sum + asset.value, 0)
+  const growth = categoryAssets.reduce((sum, asset) => sum + (asset.growth ?? 0), 0)
+  const generated = reliable ? Math.min(value, Math.max(0, growth)) : 0
+
+  return {
+    value,
+    growth,
+    base: value - generated,
+    generated,
+  }
+}
+
 export function snapshotAssetBreakdown(snapshot) {
   return [
     depositAsset({ key: 'caixaCash', category: 'cash', label: 'Caixa', value: snapshot.caixaBalance ?? 0 }),
@@ -325,6 +339,9 @@ export function calculateDashboard(snapshots, options = {}) {
     const cash = (snapshot.caixaBalance ?? 0) + (snapshot.tradeRepublicCashBalance ?? 0)
     const cashFromYields = Math.min(cash, snapshot.generatedCash ?? snapshot.reportedGeneratedCash ?? 0)
     const assetBreakdown = snapshotAssetBreakdown(snapshot)
+    const reliableComposition = snapshot.snapshotOrigin !== 'historical-visual'
+    const equityComposition = categoryChartSegments(assetBreakdown, 'equity', reliableComposition)
+    const cryptoComposition = categoryChartSegments(assetBreakdown, 'crypto', reliableComposition)
     const investedPrincipal = assetBreakdown
       .filter((asset) => asset.category === 'equity' || asset.category === 'crypto')
       .reduce((sum, asset) => sum + (asset.principal ?? asset.value), 0)
@@ -353,9 +370,20 @@ export function calculateDashboard(snapshots, options = {}) {
       cashFromSalary: cash - cashFromYields,
       cashFromYields,
       fixedIncome: fixedIncomeValue(snapshot),
+      equityValue: equityComposition.value,
+      equityGrowth: equityComposition.growth,
+      equityBase: equityComposition.base,
+      equityGenerated: equityComposition.generated,
+      cryptoValue: cryptoComposition.value,
+      cryptoGrowth: cryptoComposition.growth,
+      cryptoBase: cryptoComposition.base,
+      cryptoGenerated: cryptoComposition.generated,
       investedPrincipal,
       investedGrowth: investedValue - investedPrincipal,
       realEstatePrincipal,
+      realEstateValue: assetBreakdown
+        .filter((asset) => asset.category === 'realEstate')
+        .reduce((sum, asset) => sum + asset.value, 0),
       totalNetWorth: snapshotTotalNetWorth,
       monthlyChange: snapshotMonthlyChange,
       monthlyChangePercent: previousSnapshotNetWorth ? snapshotMonthlyChange / previousSnapshotNetWorth * 100 : undefined,

@@ -62,8 +62,6 @@ function ChartTooltip({ active, payload }: TooltipProps) {
   if (!active || !payload?.length) return null
 
   const month = payload[0].payload
-  const historicalInvestment = month.investedPrincipal + month.investedGrowth
-
   return (
     <div className="chart-tooltip">
       <p className="tooltip-date">Cierre de {month.label}</p>
@@ -74,15 +72,11 @@ function ChartTooltip({ active, payload }: TooltipProps) {
         <div><dt>Cash aportado</dt><dd>{formatMoney(month.cashFromSalary)}</dd></div>
         <div><dt>Cash generado</dt><dd>{formatMoney(month.cashFromYields)}</dd></div>
         <div><dt>Renta fija</dt><dd>{formatMoney(month.fixedIncome)}</dd></div>
-        {month.snapshotOrigin === 'historical-visual' && month.investedGrowth === 0
-          ? <div><dt>Invertido visual</dt><dd>{formatMoney(historicalInvestment)}</dd></div>
-          : (
-            <>
-              <div><dt>Invertido aportado</dt><dd>{formatMoney(month.investedPrincipal)}</dd></div>
-              <div><dt>Invertido generado</dt><dd>{formatMoney(month.investedGrowth)}</dd></div>
-            </>
-          )}
-        <div><dt>Inmobiliario aportado</dt><dd>{formatMoney(month.realEstatePrincipal)}</dd></div>
+        <div><dt>Renta variable</dt><dd>{formatMoney(month.equityValue)}</dd></div>
+        {month.snapshotOrigin !== 'historical-visual' && <div className="tooltip-detail"><dt>Beneficio RV incluido</dt><dd>{formatMoney(month.equityGrowth)}</dd></div>}
+        <div><dt>Cripto</dt><dd>{formatMoney(month.cryptoValue)}</dd></div>
+        {month.snapshotOrigin !== 'historical-visual' && <div className="tooltip-detail"><dt>Beneficio cripto incluido</dt><dd>{formatMoney(month.cryptoGrowth)}</dd></div>}
+        <div><dt>Urbanitae</dt><dd>{formatMoney(month.realEstateValue)}</dd></div>
       </dl>
     </div>
   )
@@ -109,36 +103,44 @@ const stackColors = {
   cashFromSalary: '#2f5f91',
   cashFromYields: '#86b6db',
   fixedIncome: '#8d9692',
-  investedPrincipal: '#3f7b5e',
-  investedGrowth: '#a5d2b7',
-  realEstatePrincipal: '#c48a67',
+  equityBase: '#3f7b5e',
+  equityGenerated: '#a5d2b7',
+  cryptoBase: '#73559d',
+  cryptoGenerated: '#b19ad0',
+  realEstateValue: '#c48a67',
 }
 
 const selectedStackColors = {
   cashFromSalary: '#376da2',
   cashFromYields: '#72acd6',
   fixedIncome: '#7d8884',
-  investedPrincipal: '#438764',
-  investedGrowth: '#92cfa9',
-  realEstatePrincipal: '#d0936c',
+  equityBase: '#438764',
+  equityGenerated: '#92cfa9',
+  cryptoBase: '#7f60aa',
+  cryptoGenerated: '#a98dca',
+  realEstateValue: '#d0936c',
 }
 
 const mutedStackColors = {
   cashFromSalary: '#91a0ab',
   cashFromYields: '#c6d0d6',
   fixedIncome: '#b0b8b4',
-  investedPrincipal: '#9caea4',
-  investedGrowth: '#d0ded4',
-  realEstatePrincipal: '#d7b6a3',
+  equityBase: '#9caea4',
+  equityGenerated: '#d0ded4',
+  cryptoBase: '#aaa1b7',
+  cryptoGenerated: '#d6d0df',
+  realEstateValue: '#d7b6a3',
 }
 
 const historicalStackColors = {
   cashFromSalary: '#617f9c',
   cashFromYields: '#adc5d8',
   fixedIncome: '#a5aca9',
-  investedPrincipal: '#6f8f7c',
-  investedGrowth: '#b8d7c2',
-  realEstatePrincipal: '#bc8d73',
+  equityBase: '#6f8f7c',
+  equityGenerated: '#b8d7c2',
+  cryptoBase: '#877a98',
+  cryptoGenerated: '#c1b7cc',
+  realEstateValue: '#bc8d73',
 }
 
 function cellFill(dataKey: keyof typeof stackColors, selectedPeriodEnd: string | undefined, snapshot: MonthlyOriginStack) {
@@ -155,6 +157,35 @@ function cellOpacity(snapshot: MonthlyOriginStack, selectedSnapshot: MonthlyOrig
   if (selectedSnapshot?.snapshotOrigin === 'historical-visual') return 0.82
   if (!selectedPeriodEnd || isSelected) return 1
   return 0.55
+}
+
+function withCategorySegments(snapshot: MonthlyOriginStack): MonthlyOriginStack {
+  if (Number.isFinite(snapshot.equityBase) && Number.isFinite(snapshot.cryptoBase)) return snapshot
+
+  const segmentsFor = (category: 'equity' | 'crypto') => {
+    const assets = snapshot.assetBreakdown.filter((asset) => asset.category === category)
+    const value = assets.reduce((sum, asset) => sum + asset.value, 0)
+    const growth = assets.reduce((sum, asset) => sum + (asset.growth ?? 0), 0)
+    const generated = snapshot.snapshotOrigin === 'historical-visual' ? 0 : Math.min(value, Math.max(0, growth))
+    return { value, growth, base: value - generated, generated }
+  }
+  const equity = segmentsFor('equity')
+  const crypto = segmentsFor('crypto')
+
+  return {
+    ...snapshot,
+    equityValue: equity.value,
+    equityGrowth: equity.growth,
+    equityBase: equity.base,
+    equityGenerated: equity.generated,
+    cryptoValue: crypto.value,
+    cryptoGrowth: crypto.growth,
+    cryptoBase: crypto.base,
+    cryptoGenerated: crypto.generated,
+    realEstateValue: snapshot.assetBreakdown
+      .filter((asset) => asset.category === 'realEstate')
+      .reduce((sum, asset) => sum + asset.value, 0),
+  }
 }
 
 function StackBar({ data, dataKey, name, selectedPeriodEnd, onSelectSnapshot, radius }: {
@@ -188,9 +219,7 @@ function StackBar({ data, dataKey, name, selectedPeriodEnd, onSelectSnapshot, ra
 }
 
 export function NetWorthChart({ data, selectedPeriodEnd, onSelectSnapshot }: NetWorthChartProps) {
-  const chartData = data.map((snapshot) => snapshot.snapshotOrigin === 'historical-visual' && snapshot.investedGrowth === 0
-    ? { ...snapshot, investedPrincipal: snapshot.investedPrincipal + snapshot.investedGrowth, investedGrowth: 0 }
-    : snapshot)
+  const chartData = data.map(withCategorySegments)
   const labelsByPeriodEnd = new Map(chartData.map((snapshot) => [snapshot.periodEnd, snapshot.label]))
   const yearBoundaries = chartData.filter((snapshot, index) => index > 0 && snapshot.month.slice(5, 7) === '01')
 
@@ -210,9 +239,11 @@ export function NetWorthChart({ data, selectedPeriodEnd, onSelectSnapshot }: Net
         <StackBar data={chartData} dataKey="cashFromSalary" name="Cash aportado" selectedPeriodEnd={selectedPeriodEnd} onSelectSnapshot={onSelectSnapshot} />
         <StackBar data={chartData} dataKey="cashFromYields" name="Cash generado" selectedPeriodEnd={selectedPeriodEnd} onSelectSnapshot={onSelectSnapshot} />
         <StackBar data={chartData} dataKey="fixedIncome" name="Renta fija" selectedPeriodEnd={selectedPeriodEnd} onSelectSnapshot={onSelectSnapshot} />
-        <StackBar data={chartData} dataKey="investedPrincipal" name="Invertido aportado" selectedPeriodEnd={selectedPeriodEnd} onSelectSnapshot={onSelectSnapshot} />
-        <StackBar data={chartData} dataKey="investedGrowth" name="Invertido generado" selectedPeriodEnd={selectedPeriodEnd} onSelectSnapshot={onSelectSnapshot} />
-        <StackBar data={chartData} dataKey="realEstatePrincipal" name="Inmobiliario aportado" selectedPeriodEnd={selectedPeriodEnd} onSelectSnapshot={onSelectSnapshot} radius={[4, 4, 0, 0]} />
+        <StackBar data={chartData} dataKey="equityBase" name="Renta variable" selectedPeriodEnd={selectedPeriodEnd} onSelectSnapshot={onSelectSnapshot} />
+        <StackBar data={chartData} dataKey="equityGenerated" name="RV generada" selectedPeriodEnd={selectedPeriodEnd} onSelectSnapshot={onSelectSnapshot} />
+        <StackBar data={chartData} dataKey="cryptoBase" name="Cripto" selectedPeriodEnd={selectedPeriodEnd} onSelectSnapshot={onSelectSnapshot} />
+        <StackBar data={chartData} dataKey="cryptoGenerated" name="Cripto generada" selectedPeriodEnd={selectedPeriodEnd} onSelectSnapshot={onSelectSnapshot} />
+        <StackBar data={chartData} dataKey="realEstateValue" name="Urbanitae" selectedPeriodEnd={selectedPeriodEnd} onSelectSnapshot={onSelectSnapshot} radius={[4, 4, 0, 0]} />
         {yearBoundaries.map((snapshot) => (
           <ReferenceLine
             key={`year-boundary-${snapshot.month}`}
