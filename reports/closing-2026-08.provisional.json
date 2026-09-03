@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "month": "2026-08",
+  "periodStart": "2026-08-04",
+  "periodEnd": "2026-09-03",
+  "status": "provisional",
+  "sources": {
+    "tradeRepublic": {
+      "kind": "csv",
+      "coverageStart": "2026-08-04",
+      "coverageEnd": "2026-09-02",
+      "fileName": "Exportación de transacción.csv",
+      "observedAt": "2026-09-02T12:07:06+02:00"
+    },
+    "myInvestor": {
+      "kind": "browser",
+      "observedAt": "2026-09-02T12:15:00+02:00",
+      "valuationDate": "2026-09-02"
+    },
+    "caixa": {
+      "kind": "browser",
+      "observedAt": "2026-09-02T12:20:00+02:00"
+    },
+    "criptan": {
+      "kind": "user",
+      "observedAt": "2026-09-02T12:10:00+02:00"
+    },
+    "urbanitae": {
+      "kind": "user",
+      "observedAt": "2026-09-02T12:10:00+02:00"
+    }
+  },
+  "balances": {
+    "caixa": 12686.61,
+    "tradeRepublicCash": 9381.5,
+    "tradeRepublicEquity": 16536.99,
+    "tradeRepublicFixedIncome": 5822.1,
+    "tradeRepublicCrypto": 1627.49,
+    "myInvestorEquity": 27039.29,
+    "myInvestorFixedIncome": 0,
+    "myInvestorCrypto": 2277.22,
+    "criptanCrypto": 993.26,
+    "urbanitaeRealEstate": 2000
+  },
+  "flows": {
+    "myInvestorEquity": 0,
+    "myInvestorFixedIncome": 0,
+    "myInvestorCrypto": 0,
+    "criptan": 0,
+    "urbanitae": 0
+  },
+  "principals": {
+    "tradeRepublicEquity": 13461.22,
+    "tradeRepublicFixedIncome": 6003.53,
+    "tradeRepublicCrypto": 2683.49,
+    "myInvestorEquity": 25055.45,
+    "myInvestorFixedIncome": 0,
+    "myInvestorCrypto": 2411.91,
+    "urbanitaeRealEstate": 2000
+  },
+  "profits": {
+    "tradeRepublicEquity": 3075.77,
+    "tradeRepublicFixedIncome": -181.43,
+    "tradeRepublicCrypto": -1056,
+    "myInvestorEquity": 1983.84,
+    "myInvestorFixedIncome": 0,
+    "myInvestorCrypto": -134.69,
+    "urbanitaeRealEstate": 0
+  },
+  "orders": [
+    { "source": "Trade Republic", "product": "Physical Swiss Gold USD", "date": "2026-08-10", "kind": "subscription", "amount": 8.6 },
+    { "source": "Trade Republic", "product": "Physical Swiss Gold USD", "date": "2026-08-17", "kind": "subscription", "amount": 2.38 },
+    { "source": "Trade Republic", "product": "Physical Swiss Gold USD", "date": "2026-08-24", "kind": "subscription", "amount": 5.47 },
+    { "source": "Trade Republic", "product": "Aug. 2026 bond", "date": "2026-08-28", "kind": "other", "amount": 2449.2 },
+    { "source": "Trade Republic", "product": "FTSE China USD (Acc)", "date": "2026-08-31", "kind": "sale", "amount": 1786.96, "costBasis": 1988.33 },
+    { "source": "Trade Republic", "product": "Physical Swiss Gold USD", "date": "2026-08-31", "kind": "subscription", "amount": 751 },
+    { "source": "Trade Republic", "product": "Physical Swiss Gold USD saveback", "date": "2026-09-02", "kind": "subscription", "amount": 7.6 },
+    { "source": "Trade Republic", "product": "Bitcoin", "date": "2026-09-02", "kind": "subscription", "amount": 7.53 },
+    { "source": "Trade Republic", "product": "Bitcoin", "date": "2026-09-02", "kind": "subscription", "amount": 49.99 }
+  ],
+  "warnings": [
+    "Provisional closing: the period ends on 2026-09-03 but evidence currently ends on 2026-09-02.",
+    "Trade Republic CSV coverage ends on 2026-09-02.",
+    "All market values were observed before the requested period end.",
+    "Trade Republic equity sale cost basis of EUR 1988.33 is derived from the previous principal, purchases, current value, and displayed cumulative profit; the CSV contains proceeds but not disposed cost basis.",
+    "The Trade Republic saveback reward and its resulting purchase are represented by separate CSV rows whose asset metadata do not agree; EUR 7.60 was reconciled from the net reward.",
+    "Economy Planner currently forces fixed-income unrealized profit to zero and cannot represent the reported Trade Republic fixed-income loss of EUR 181.43.",
+    "No MyInvestor orders were found within the period; its invested principals come from the displayed source totals."
+  ],
+  "evidence": [
+    { "source": "Trade Republic", "observedAt": "2026-09-02T12:07:06+02:00", "location": "exported CSV", "detail": "52 parsed rows; 0 unknown rows; coverage 2026-08-04 through 2026-09-02" },
+    { "source": "Trade Republic", "observedAt": "2026-09-02T12:22:00+02:00", "location": "user-provided app values", "detail": "cash 9381.50; equity 16536.99; fixed income 5822.10; crypto 1627.49" },
+    { "source": "MyInvestor", "observedAt": "2026-09-02T12:15:00+02:00", "location": "funds overview", "detail": "funds value 27039.29; invested 25055.45; profit 1983.84" },
+    { "source": "MyInvestor", "observedAt": "2026-09-02T12:17:00+02:00", "location": "WisdomTree Bitcoin position", "detail": "value 2277.22; invested 2411.91; profit -134.69; no orders in closing period" },
+    { "source": "Caixa", "observedAt": "2026-09-02T12:20:00+02:00", "location": "accounts overview", "detail": "two account balances 9536.16 and 3150.45; total 12686.61" },
+    { "source": "Criptan", "observedAt": "2026-09-02T12:10:00+02:00", "location": "user-provided value", "detail": "value 993.26; period flow confirmed as zero" },
+    { "source": "Urbanitae", "observedAt": "2026-09-02T12:10:00+02:00", "location": "user-provided value", "detail": "value 2000.00; period flow confirmed as zero" }
+  ]
+}

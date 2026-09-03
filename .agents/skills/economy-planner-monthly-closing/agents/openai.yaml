@@ -1,0 +1,4 @@
+interface:
+  display_name: "Economy Planner Monthly Closing"
+  short_description: "Collect, validate, and preview a monthly financial closing"
+  default_prompt: "Run a monthly Economy Planner closing from verified source data."
