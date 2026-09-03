@@ -1,0 +1,26 @@
+{
+  "publishedAt": "2026-09-03T17:25:10.801Z",
+  "month": "2026-08",
+  "tradeRepublicImportBatchId": "bf62a748-fd45-48dc-9136-2f5e3e62e9ec",
+  "snapshotId": "e75dfac5-550e-463e-b072-d73cf89560cd",
+  "verification": {
+    "passed": true,
+    "mismatches": [],
+    "latestMonth": "2026-08",
+    "totalNetWorth": 78655.24,
+    "monthlyChange": 1786.04,
+    "netContribution": 0,
+    "estimatedReturn": 1786.04,
+    "marketGrowth": 4039.81,
+    "marketChange": 1791.63,
+    "detectedYields": 97.5,
+    "equityValue": 43664.3,
+    "equityBase": 38472.65,
+    "equityGenerated": 5191.65,
+    "fixedIncomeValue": 5825.87,
+    "cryptoValue": 5099.96,
+    "cryptoBase": 5099.96,
+    "cryptoGenerated": 0,
+    "realEstateValue": 2000
+  }
+}

@@ -4,7 +4,7 @@ Use JSON. Monetary amounts are numbers in EUR rounded to cents. Dates use `YYYY-
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "month": "2026-08",
   "periodStart": "2026-08-04",
   "periodEnd": "2026-09-03",
@@ -65,12 +65,28 @@ Use JSON. Monetary amounts are numbers in EUR rounded to cents. Dates use `YYYY-
     "myInvestorCrypto": 0,
     "urbanitaeRealEstate": 0
   },
-  "orders": [],
+  "orders": [
+    {
+      "source": "Trade Republic",
+      "product": "Example ETF",
+      "date": "2026-08-31",
+      "kind": "sale",
+      "amount": 900,
+      "costBasis": 1000,
+      "realizedProfit": -100,
+      "realizedProfitSource": "trade-republic-web",
+      "id": "stable-transaction-id"
+    }
+  ],
   "warnings": [],
   "evidence": []
 }
 ```
 
-`status` is `provisional` or `final`. An order has `source`, `product`, `date`, `kind`, `amount`, and an optional `costBasis` and stable `id`. `kind` is one of `subscription`, `sale`, `internal-transfer`, or `other`. For a sale, `amount` is the proceeds and `costBasis` is the principal removed; they are not interchangeable.
+`status` is `provisional` or `final`. An order has `source`, `product`, `date`, `kind`, `amount`, and an optional stable `id`. `kind` is one of `subscription`, `sale`, `internal-transfer`, or `other`. For a sale, `amount` is the proceeds, `costBasis` is the principal removed, and `realizedProfit` is the exact profit or loss displayed by the source; they are not interchangeable.
+
+Schema version 2 requires every Trade Republic sale in a final report to include `realizedProfit` and `realizedProfitSource: "trade-republic-web"`. Add an evidence entry with the same order ID and the web location where the expanded transaction detail was observed. Schema version 1 remains valid only for reports produced before this requirement was introduced.
+
+Normally `realizedProfit = amount - costBasis`. If Trade Republic displays a different result because its figure and the CSV proceeds apply fees or taxes differently, preserve the displayed value, explain the difference in `warnings`, and record both bases in the evidence entry rather than silently forcing equality.
 
 Evidence entries should be concise and avoid secrets. Store the source name, observation time, displayed label/value, and enough location context to reproduce the observation. Never store passwords, session identifiers, account numbers, personal identifiers, cookies, or authentication tokens.

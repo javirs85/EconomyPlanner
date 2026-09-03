@@ -16,7 +16,7 @@ function requireValue(condition, message) {
   if (!condition) errors.push(message)
 }
 
-requireValue(report.schemaVersion === 1, 'schemaVersion must be 1')
+requireValue(report.schemaVersion === 1 || report.schemaVersion === 2, 'schemaVersion must be 1 or 2')
 requireValue(/^\d{4}-\d{2}$/.test(report.month ?? ''), 'month must use YYYY-MM')
 requireValue(datePattern.test(report.periodStart ?? ''), 'periodStart must use YYYY-MM-DD')
 requireValue(datePattern.test(report.periodEnd ?? ''), 'periodEnd must use YYYY-MM-DD')
@@ -59,6 +59,18 @@ for (const [index, order] of (report.orders ?? []).entries()) {
   requireValue(typeof order.amount === 'number' && Number.isFinite(order.amount), `orders[${index}].amount must be a finite number`)
   if (order.kind === 'sale') {
     requireValue(typeof order.costBasis === 'number' && Number.isFinite(order.costBasis), `orders[${index}].costBasis is required for a sale`)
+    if (report.schemaVersion >= 2 && report.status === 'final' && order.source === 'Trade Republic') {
+      requireValue(typeof order.realizedProfit === 'number' && Number.isFinite(order.realizedProfit), `orders[${index}].realizedProfit is required for a final Trade Republic sale`)
+      requireValue(order.realizedProfitSource === 'trade-republic-web', `orders[${index}].realizedProfitSource must be trade-republic-web`)
+      const hasEvidence = (report.evidence ?? []).some((entry) => entry.orderId === order.id && entry.source === 'Trade Republic')
+      requireValue(Boolean(order.id) && hasEvidence, `orders[${index}] requires Trade Republic web evidence linked by orderId`)
+    }
+    if (typeof order.costBasis === 'number' && typeof order.realizedProfit === 'number') {
+      const calculatedProfit = order.amount - order.costBasis
+      if (Math.abs(calculatedProfit - order.realizedProfit) > 0.02) {
+        warnings.push(`orders[${index}] realizedProfit differs from amount - costBasis; document the fee/tax basis`)
+      }
+    }
   }
   if (order.date < report.periodStart || order.date > report.periodEnd) warnings.push(`orders[${index}] falls outside the closing period`)
   const key = order.id ?? `${order.source}|${order.product}|${order.date}|${order.kind}|${order.amount}`
