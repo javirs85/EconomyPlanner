@@ -21,6 +21,7 @@ const balanceSections = [
       ['tradeRepublicEquityValue', 'TR RV valor'],
       ['tradeRepublicEquityProfit', 'TR RV beneficio'],
       ['tradeRepublicFixedIncomeValue', 'TR RF vivo'],
+      ['tradeRepublicFixedIncomeProfit', 'TR RF beneficio'],
       ['tradeRepublicCryptoValue', 'TR Cripto valor'],
       ['tradeRepublicCryptoProfit', 'TR Cripto beneficio'],
     ] as const,
@@ -31,6 +32,7 @@ const balanceSections = [
       ['myInvestorEquityValue', 'RV valor'],
       ['myInvestorEquityProfit', 'RV beneficio'],
       ['myInvestorFixedIncomeValue', 'RF vivo'],
+      ['myInvestorFixedIncomeProfit', 'RF beneficio'],
       ['myInvestorCryptoValue', 'Cripto valor'],
       ['myInvestorCryptoProfit', 'Cripto beneficio'],
     ] as const,
@@ -48,15 +50,17 @@ const balanceSections = [
 const balanceFields = balanceSections.flatMap((section) => section.fields.map(([field]) => field))
 const profitFields = new Set<string>([
   'tradeRepublicEquityProfit',
+  'tradeRepublicFixedIncomeProfit',
   'tradeRepublicCryptoProfit',
   'myInvestorEquityProfit',
+  'myInvestorFixedIncomeProfit',
   'myInvestorCryptoProfit',
   'urbanitaeRealEstateProfit',
 ])
 const netWorthFields = balanceFields.filter((field) => !profitFields.has(field))
 
 type BalanceField = typeof balanceFields[number]
-type PrincipalField = 'tradeRepublicEquityPrincipal' | 'tradeRepublicCryptoPrincipal' | 'myInvestorEquityPrincipal' | 'myInvestorCryptoPrincipal' | 'urbanitaeRealEstatePrincipal'
+type PrincipalField = 'tradeRepublicEquityPrincipal' | 'tradeRepublicFixedIncomePrincipal' | 'tradeRepublicCryptoPrincipal' | 'myInvestorEquityPrincipal' | 'myInvestorFixedIncomePrincipal' | 'myInvestorCryptoPrincipal' | 'urbanitaeRealEstatePrincipal'
 type FlowField = 'myInvestorEquityExternalFlow' | 'myInvestorFixedIncomeExternalFlow' | 'myInvestorCryptoExternalFlow' | 'criptanExternalFlow' | 'urbanitaeExternalFlow'
 type FormValues = Record<BalanceField | PrincipalField | FlowField, string>
 
@@ -67,6 +71,8 @@ const emptyValues: FormValues = {
   tradeRepublicEquityProfit: '',
   tradeRepublicEquityPrincipal: '',
   tradeRepublicFixedIncomeValue: '0',
+  tradeRepublicFixedIncomeProfit: '',
+  tradeRepublicFixedIncomePrincipal: '',
   tradeRepublicCryptoValue: '',
   tradeRepublicCryptoProfit: '',
   tradeRepublicCryptoPrincipal: '',
@@ -74,6 +80,8 @@ const emptyValues: FormValues = {
   myInvestorEquityProfit: '',
   myInvestorEquityPrincipal: '',
   myInvestorFixedIncomeValue: '0',
+  myInvestorFixedIncomeProfit: '',
+  myInvestorFixedIncomePrincipal: '',
   myInvestorCryptoValue: '',
   myInvestorCryptoProfit: '',
   myInvestorCryptoPrincipal: '',
@@ -122,8 +130,10 @@ function snapshotProfit(snapshot: MonthlySnapshot, valueField: keyof MonthlySnap
 
 function snapshotFieldValue(snapshot: MonthlySnapshot, field: BalanceField) {
   if (field === 'tradeRepublicEquityProfit') return snapshotProfit(snapshot, 'tradeRepublicEquityValue', 'tradeRepublicEquityPrincipal')
+  if (field === 'tradeRepublicFixedIncomeProfit') return snapshotProfit(snapshot, 'tradeRepublicFixedIncomeValue', 'tradeRepublicFixedIncomePrincipal')
   if (field === 'tradeRepublicCryptoProfit') return snapshotProfit(snapshot, 'tradeRepublicCryptoValue', 'tradeRepublicCryptoPrincipal')
   if (field === 'myInvestorEquityProfit') return snapshotProfit(snapshot, 'myInvestorEquityValue', 'myInvestorEquityPrincipal')
+  if (field === 'myInvestorFixedIncomeProfit') return snapshotProfit(snapshot, 'myInvestorFixedIncomeValue', 'myInvestorFixedIncomePrincipal')
   if (field === 'myInvestorCryptoProfit') return snapshotProfit(snapshot, 'myInvestorCryptoValue', 'myInvestorCryptoPrincipal')
   if (field === 'urbanitaeRealEstateProfit') return snapshotProfit(snapshot, 'urbanitaeRealEstateValue', 'urbanitaeRealEstatePrincipal')
   return Number(snapshot[field] ?? 0)
@@ -135,8 +145,10 @@ function snapshotToValues(snapshot: MonthlySnapshot): FormValues {
       balanceFields.map((key) => [key, formatInputNumber(snapshotFieldValue(snapshot, key))]),
     ),
     tradeRepublicEquityPrincipal: formatInputNumber(snapshot.tradeRepublicEquityPrincipal ?? snapshot.tradeRepublicEquityValue ?? 0),
+    tradeRepublicFixedIncomePrincipal: formatInputNumber(snapshot.tradeRepublicFixedIncomePrincipal ?? snapshot.tradeRepublicFixedIncomeValue ?? 0),
     tradeRepublicCryptoPrincipal: formatInputNumber(snapshot.tradeRepublicCryptoPrincipal ?? snapshot.tradeRepublicCryptoValue ?? 0),
     myInvestorEquityPrincipal: formatInputNumber(snapshot.myInvestorEquityPrincipal ?? snapshot.myInvestorEquityValue ?? 0),
+    myInvestorFixedIncomePrincipal: formatInputNumber(snapshot.myInvestorFixedIncomePrincipal ?? snapshot.myInvestorFixedIncomeValue ?? 0),
     myInvestorCryptoPrincipal: formatInputNumber(snapshot.myInvestorCryptoPrincipal ?? snapshot.myInvestorCryptoValue ?? 0),
     urbanitaeRealEstatePrincipal: formatInputNumber(snapshot.urbanitaeRealEstatePrincipal ?? snapshot.urbanitaeRealEstateValue ?? 0),
     myInvestorEquityExternalFlow: formatInputNumber(snapshot.myInvestorEquityExternalFlow ?? snapshot.myInvestorExternalFlow ?? 0),
@@ -258,7 +270,6 @@ export function MonthlyClosingPanel({
   const period = useMemo(() => periodForMonth(month), [month])
   const [values, setValues] = useState(emptyValues)
   const [tradeRepublicFacts, setTradeRepublicFacts] = useState<TradeRepublicFacts>(emptyTradeRepublicFacts)
-  const [previousSnapshot, setPreviousSnapshot] = useState<MonthlySnapshot>()
   const [coverage, setCoverage] = useState<CsvCoverage>({ status: 'missing' })
   const [saved, setSaved] = useState(false)
   const [expanded, setExpanded] = useState(true)
@@ -271,7 +282,6 @@ export function MonthlyClosingPanel({
       .then((status) => {
         if (ignore) return
         setTradeRepublicFacts(status.tradeRepublicFacts ?? { ...emptyTradeRepublicFacts, tradeRepublicCashContribution: status.tradeRepublicExternalFlow })
-        setPreviousSnapshot(status.previousSnapshot)
         setCoverage(status.csvCoverage)
         setSaved(Boolean(status.snapshot))
         setExpanded(!status.snapshot)
@@ -285,7 +295,6 @@ export function MonthlyClosingPanel({
   }, [period.month, period.periodEnd, period.periodStart, refreshKey])
 
   const total = netWorthFields.reduce((sum, field) => sum + numericValue(values[field]), 0)
-  const principalInputsEditable = period.month <= '2026-05' || !previousSnapshot
   const coverageStatus = coverageCopy(coverage, period.periodEnd)
   const cashPlan = useMemo(() => {
     const target = 10_000
@@ -332,53 +341,26 @@ export function MonthlyClosingPanel({
   }
 
   function principalFor(field: keyof FormValues) {
-    if (principalInputsEditable) {
-      if (field === 'tradeRepublicEquityPrincipal') return numericValue(values.tradeRepublicEquityValue) - numericValue(values.tradeRepublicEquityProfit)
-      if (field === 'tradeRepublicCryptoPrincipal') return numericValue(values.tradeRepublicCryptoValue) - numericValue(values.tradeRepublicCryptoProfit)
-      if (field === 'myInvestorEquityPrincipal') return numericValue(values.myInvestorEquityValue) - numericValue(values.myInvestorEquityProfit)
-      if (field === 'myInvestorCryptoPrincipal') return numericValue(values.myInvestorCryptoValue) - numericValue(values.myInvestorCryptoProfit)
-      if (field === 'urbanitaeRealEstatePrincipal') return numericValue(values.urbanitaeRealEstateValue) - numericValue(values.urbanitaeRealEstateProfit)
-      return numericValue(values[field])
-    }
-    if (field === 'tradeRepublicEquityPrincipal') {
-      return Math.max(0, (previousSnapshot?.tradeRepublicEquityPrincipal ?? previousSnapshot?.tradeRepublicEquityValue ?? 0) + tradeRepublicFacts.tradeRepublicEquityFlow)
-    }
-    if (field === 'tradeRepublicCryptoPrincipal') {
-      return Math.max(0, (previousSnapshot?.tradeRepublicCryptoPrincipal ?? previousSnapshot?.tradeRepublicCryptoValue ?? 0) + tradeRepublicFacts.tradeRepublicCryptoFlow)
-    }
-    if (field === 'myInvestorEquityPrincipal') {
-      return Math.max(0, (previousSnapshot?.myInvestorEquityPrincipal ?? previousSnapshot?.myInvestorEquityValue ?? 0) + numericValue(values.myInvestorEquityExternalFlow))
-    }
-    if (field === 'myInvestorCryptoPrincipal') {
-      return Math.max(0, (previousSnapshot?.myInvestorCryptoPrincipal ?? previousSnapshot?.myInvestorCryptoValue ?? 0) + numericValue(values.myInvestorCryptoExternalFlow))
-    }
-    if (field === 'urbanitaeRealEstatePrincipal') {
-      return Math.max(0, (previousSnapshot?.urbanitaeRealEstatePrincipal ?? previousSnapshot?.urbanitaeRealEstateValue ?? 0) + numericValue(values.urbanitaeExternalFlow))
-    }
+    if (field === 'tradeRepublicEquityPrincipal') return Math.max(0, numericValue(values.tradeRepublicEquityValue) - numericValue(values.tradeRepublicEquityProfit))
+    if (field === 'tradeRepublicFixedIncomePrincipal') return Math.max(0, numericValue(values.tradeRepublicFixedIncomeValue) - numericValue(values.tradeRepublicFixedIncomeProfit))
+    if (field === 'tradeRepublicCryptoPrincipal') return Math.max(0, numericValue(values.tradeRepublicCryptoValue) - numericValue(values.tradeRepublicCryptoProfit))
+    if (field === 'myInvestorEquityPrincipal') return Math.max(0, numericValue(values.myInvestorEquityValue) - numericValue(values.myInvestorEquityProfit))
+    if (field === 'myInvestorFixedIncomePrincipal') return Math.max(0, numericValue(values.myInvestorFixedIncomeValue) - numericValue(values.myInvestorFixedIncomeProfit))
+    if (field === 'myInvestorCryptoPrincipal') return Math.max(0, numericValue(values.myInvestorCryptoValue) - numericValue(values.myInvestorCryptoProfit))
+    if (field === 'urbanitaeRealEstatePrincipal') return Math.max(0, numericValue(values.urbanitaeRealEstateValue) - numericValue(values.urbanitaeRealEstateProfit))
     return numericValue(values[field])
   }
 
   function currentPrincipalValues() {
     return {
       tradeRepublicEquityPrincipal: principalFor('tradeRepublicEquityPrincipal'),
+      tradeRepublicFixedIncomePrincipal: principalFor('tradeRepublicFixedIncomePrincipal'),
       tradeRepublicCryptoPrincipal: principalFor('tradeRepublicCryptoPrincipal'),
       myInvestorEquityPrincipal: principalFor('myInvestorEquityPrincipal'),
+      myInvestorFixedIncomePrincipal: principalFor('myInvestorFixedIncomePrincipal'),
       myInvestorCryptoPrincipal: principalFor('myInvestorCryptoPrincipal'),
       urbanitaeRealEstatePrincipal: principalFor('urbanitaeRealEstatePrincipal'),
     }
-  }
-
-  function profitFor(valueField: keyof FormValues, principalField: keyof FormValues) {
-    return numericValue(values[valueField]) - principalFor(principalField)
-  }
-
-  function profitForField(field: string) {
-    if (field === 'tradeRepublicEquityProfit') return profitFor('tradeRepublicEquityValue', 'tradeRepublicEquityPrincipal')
-    if (field === 'tradeRepublicCryptoProfit') return profitFor('tradeRepublicCryptoValue', 'tradeRepublicCryptoPrincipal')
-    if (field === 'myInvestorEquityProfit') return profitFor('myInvestorEquityValue', 'myInvestorEquityPrincipal')
-    if (field === 'myInvestorCryptoProfit') return profitFor('myInvestorCryptoValue', 'myInvestorCryptoPrincipal')
-    if (field === 'urbanitaeRealEstateProfit') return profitFor('urbanitaeRealEstateValue', 'urbanitaeRealEstatePrincipal')
-    return 0
   }
 
   async function submit(event: React.FormEvent) {
@@ -392,7 +374,6 @@ export function MonthlyClosingPanel({
       }
       const status = await saveMonthlyClosing({ ...amounts, ...period } as MonthlySnapshot)
       setTradeRepublicFacts(status.tradeRepublicFacts ?? { ...emptyTradeRepublicFacts, tradeRepublicCashContribution: status.tradeRepublicExternalFlow })
-      setPreviousSnapshot(status.previousSnapshot)
       setCoverage(status.csvCoverage)
       setSaved(true)
       setExpanded(false)
@@ -431,14 +412,10 @@ export function MonthlyClosingPanel({
                 <legend>{section.title}</legend>
                 <div className="closing-form-grid">
                   {section.fields.map(([field, label]) => (
-                    profitFields.has(field) && !principalInputsEditable
-                      ? <AutoProfitCard field={field} label={label} profit={profitForField(field)} key={field} />
-                      : (
-                        <label className="balance-input" key={field}>
-                          <span>{label}</span><small>{profitFields.has(field) ? 'Baseline editable' : 'Saldo de cierre'}</small>
-                          <div><input min="0" {...inputFor(field)} /><b>EUR</b></div>
-                        </label>
-                      )
+                    <label className="balance-input" key={field}>
+                      <span>{label}</span><small>{profitFields.has(field) ? 'Beneficio mostrado por la plataforma' : 'Saldo de cierre'}</small>
+                      <div><input {...inputFor(field)} /><b>EUR</b></div>
+                    </label>
                   ))}
                 </div>
                 {section.title === 'Trade Republic' && tradeRepublicImport}
@@ -503,16 +480,6 @@ function DetectedFlow({ label, value }: { label: string, value: number }) {
       <span>{label}</span>
       <small>No editable, detectado en CSV</small>
       <strong>{value >= 0 ? '+' : ''}{formatMoney(value)}</strong>
-    </div>
-  )
-}
-
-function AutoProfitCard({ field, label, profit }: { field: string, label: string, profit: number }) {
-  return (
-    <div className="detected-flow auto-principal" data-field={field}>
-      <span>{label}</span>
-      <small>Calculado: valor - aportado</small>
-      <strong>{formatMoney(profit)}</strong>
     </div>
   )
 }

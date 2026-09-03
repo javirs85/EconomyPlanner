@@ -6,7 +6,7 @@ test('netAmount uses amount plus tax and fee as the accounting amount', () => {
   assert.equal(netAmount({ amount: 15, tax: -2.85, fee: -0.15 }), 12)
 })
 
-test('resolves baseline principals from inputs and tracked principals from previous snapshot plus flows', () => {
+test('resolves baseline principals, tracked flows, and explicit source principals', () => {
   assert.deepEqual(resolveSnapshotPrincipals({
     month: '2026-05',
     tradeRepublicEquityValue: 100,
@@ -17,8 +17,10 @@ test('resolves baseline principals from inputs and tracked principals from previ
     urbanitaeRealEstateValue: 60,
   }, undefined), {
     tradeRepublicEquityPrincipal: 80,
+    tradeRepublicFixedIncomePrincipal: 0,
     tradeRepublicCryptoPrincipal: 30,
     myInvestorEquityPrincipal: 40,
+    myInvestorFixedIncomePrincipal: 0,
     myInvestorCryptoPrincipal: 50,
     urbanitaeRealEstatePrincipal: 60,
   })
@@ -30,20 +32,86 @@ test('resolves baseline principals from inputs and tracked principals from previ
     urbanitaeExternalFlow: 20,
   }, {
     tradeRepublicEquityPrincipal: 100,
+    tradeRepublicFixedIncomePrincipal: 250,
     tradeRepublicCryptoPrincipal: 200,
     myInvestorEquityPrincipal: 300,
+    myInvestorFixedIncomePrincipal: 350,
     myInvestorCryptoPrincipal: 400,
     urbanitaeRealEstatePrincipal: 500,
   }, {
     tradeRepublicEquityFlow: 15,
+    tradeRepublicFixedIncomeFlow: -50,
     tradeRepublicCryptoFlow: -25,
   }), {
     tradeRepublicEquityPrincipal: 115,
+    tradeRepublicFixedIncomePrincipal: 200,
     tradeRepublicCryptoPrincipal: 175,
     myInvestorEquityPrincipal: 310,
+    myInvestorFixedIncomePrincipal: 350,
     myInvestorCryptoPrincipal: 395,
     urbanitaeRealEstatePrincipal: 520,
   })
+
+  assert.deepEqual(resolveSnapshotPrincipals({
+    month: '2026-08',
+    tradeRepublicEquityPrincipal: 13417.2,
+    tradeRepublicFixedIncomePrincipal: 6003.53,
+    tradeRepublicCryptoPrincipal: 2673.45,
+    myInvestorEquityPrincipal: 25055.45,
+    myInvestorFixedIncomePrincipal: 0,
+    myInvestorCryptoPrincipal: 2411.91,
+    urbanitaeRealEstatePrincipal: 2000,
+  }, {
+    tradeRepublicEquityPrincipal: 14674.5,
+    tradeRepublicFixedIncomePrincipal: 6925.89,
+    tradeRepublicCryptoPrincipal: 2739.22,
+    myInvestorEquityPrincipal: 25055.45,
+    myInvestorFixedIncomePrincipal: 0,
+    myInvestorCryptoPrincipal: 2447.99,
+    urbanitaeRealEstatePrincipal: 2000,
+  }, {
+    tradeRepublicEquityFlow: -1013.53,
+    tradeRepublicFixedIncomeFlow: -2449.2,
+    tradeRepublicCryptoFlow: 65.12,
+  }), {
+    tradeRepublicEquityPrincipal: 13417.2,
+    tradeRepublicFixedIncomePrincipal: 6003.53,
+    tradeRepublicCryptoPrincipal: 2673.45,
+    myInvestorEquityPrincipal: 25055.45,
+    myInvestorFixedIncomePrincipal: 0,
+    myInvestorCryptoPrincipal: 2411.91,
+    urbanitaeRealEstatePrincipal: 2000,
+  })
+})
+
+test('dashboard counts only external money as saving and includes fixed-income profit', () => {
+  const dashboard = calculateDashboard([{
+    month: '2026-07', periodStart: '2026-07-04', periodEnd: '2026-08-03', snapshotOrigin: 'tracked',
+    caixaBalance: 100, tradeRepublicCashBalance: 100,
+    tradeRepublicEquityValue: 100, tradeRepublicEquityPrincipal: 90,
+    tradeRepublicFixedIncomeValue: 100, tradeRepublicFixedIncomePrincipal: 100,
+    tradeRepublicCryptoValue: 100, tradeRepublicCryptoPrincipal: 100,
+    myInvestorEquityValue: 100, myInvestorEquityPrincipal: 100,
+    myInvestorFixedIncomeValue: 0, myInvestorFixedIncomePrincipal: 0,
+    myInvestorCryptoValue: 0, myInvestorCryptoPrincipal: 0,
+    criptanCryptoValue: 0, urbanitaeRealEstateValue: 0, urbanitaeRealEstatePrincipal: 0,
+  }, {
+    month: '2026-08', periodStart: '2026-08-04', periodEnd: '2026-09-03', snapshotOrigin: 'tracked',
+    caixaBalance: 120, tradeRepublicCashBalance: 100,
+    tradeRepublicCashContribution: 20,
+    tradeRepublicEquityFlow: -1000, tradeRepublicFixedIncomeFlow: -500,
+    tradeRepublicEquityValue: 100, tradeRepublicEquityPrincipal: 80,
+    tradeRepublicFixedIncomeValue: 90, tradeRepublicFixedIncomePrincipal: 100,
+    tradeRepublicCryptoValue: 100, tradeRepublicCryptoPrincipal: 100,
+    myInvestorEquityValue: 100, myInvestorEquityPrincipal: 100,
+    myInvestorFixedIncomeValue: 0, myInvestorFixedIncomePrincipal: 0,
+    myInvestorCryptoValue: 0, myInvestorCryptoPrincipal: 0,
+    criptanCryptoValue: 0, urbanitaeRealEstateValue: 0, urbanitaeRealEstatePrincipal: 0,
+  }])
+
+  assert.equal(dashboard.summary.netContribution, 20)
+  assert.equal(dashboard.snapshots.at(-1).savingsBreakdown.total, 20)
+  assert.equal(dashboard.summary.marketGrowth, 10)
 })
 
 test('classifies generated cash, investment flows, expenses, maturities and outbounds', () => {

@@ -17,11 +17,13 @@ export interface MonthlySnapshot {
   tradeRepublicCryptoFlow?: number
   generatedCash?: number
   tradeRepublicEquityPrincipal?: number
+  tradeRepublicFixedIncomePrincipal?: number
   tradeRepublicCryptoPrincipal?: number
   myInvestorEquityValue: number
   myInvestorFixedIncomeValue: number
   myInvestorCryptoValue: number
   myInvestorEquityPrincipal?: number
+  myInvestorFixedIncomePrincipal?: number
   myInvestorCryptoPrincipal?: number
   criptanCryptoValue: number
   myInvestorExternalFlow?: number

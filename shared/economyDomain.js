@@ -139,23 +139,34 @@ export function isPrincipalBaseline(snapshot, previousSnapshot) {
 }
 
 export function resolveSnapshotPrincipals(snapshot, previousSnapshot, tradeRepublicFacts = {}) {
-  if (isPrincipalBaseline(snapshot, previousSnapshot)) {
-    return {
-      tradeRepublicEquityPrincipal: snapshot.tradeRepublicEquityPrincipal ?? snapshot.tradeRepublicEquityValue ?? 0,
-      tradeRepublicCryptoPrincipal: snapshot.tradeRepublicCryptoPrincipal ?? snapshot.tradeRepublicCryptoValue ?? 0,
-      myInvestorEquityPrincipal: snapshot.myInvestorEquityPrincipal ?? snapshot.myInvestorEquityValue ?? 0,
-      myInvestorCryptoPrincipal: snapshot.myInvestorCryptoPrincipal ?? snapshot.myInvestorCryptoValue ?? 0,
-      urbanitaeRealEstatePrincipal: snapshot.urbanitaeRealEstatePrincipal ?? snapshot.urbanitaeRealEstateValue ?? 0,
-    }
-  }
-
+  const baseline = isPrincipalBaseline(snapshot, previousSnapshot)
   return {
-    tradeRepublicEquityPrincipal: flowAdjustedPrincipal(previousSnapshot.tradeRepublicEquityPrincipal, previousSnapshot.tradeRepublicEquityValue, tradeRepublicFacts.tradeRepublicEquityFlow),
-    tradeRepublicCryptoPrincipal: flowAdjustedPrincipal(previousSnapshot.tradeRepublicCryptoPrincipal, previousSnapshot.tradeRepublicCryptoValue, tradeRepublicFacts.tradeRepublicCryptoFlow),
-    myInvestorEquityPrincipal: flowAdjustedPrincipal(previousSnapshot.myInvestorEquityPrincipal, previousSnapshot.myInvestorEquityValue, snapshot.myInvestorEquityExternalFlow ?? snapshot.myInvestorExternalFlow ?? 0),
-    myInvestorCryptoPrincipal: flowAdjustedPrincipal(previousSnapshot.myInvestorCryptoPrincipal, previousSnapshot.myInvestorCryptoValue, snapshot.myInvestorCryptoExternalFlow ?? 0),
-    urbanitaeRealEstatePrincipal: flowAdjustedPrincipal(previousSnapshot.urbanitaeRealEstatePrincipal, previousSnapshot.urbanitaeRealEstateValue, snapshot.urbanitaeExternalFlow ?? 0),
+    tradeRepublicEquityPrincipal: suppliedOrCalculatedPrincipal(snapshot.tradeRepublicEquityPrincipal, baseline
+      ? snapshot.tradeRepublicEquityValue
+      : flowAdjustedPrincipal(previousSnapshot.tradeRepublicEquityPrincipal, previousSnapshot.tradeRepublicEquityValue, tradeRepublicFacts.tradeRepublicEquityFlow)),
+    tradeRepublicFixedIncomePrincipal: suppliedOrCalculatedPrincipal(snapshot.tradeRepublicFixedIncomePrincipal, baseline
+      ? snapshot.tradeRepublicFixedIncomeValue
+      : flowAdjustedPrincipal(previousSnapshot.tradeRepublicFixedIncomePrincipal, previousSnapshot.tradeRepublicFixedIncomeValue, tradeRepublicFacts.tradeRepublicFixedIncomeFlow)),
+    tradeRepublicCryptoPrincipal: suppliedOrCalculatedPrincipal(snapshot.tradeRepublicCryptoPrincipal, baseline
+      ? snapshot.tradeRepublicCryptoValue
+      : flowAdjustedPrincipal(previousSnapshot.tradeRepublicCryptoPrincipal, previousSnapshot.tradeRepublicCryptoValue, tradeRepublicFacts.tradeRepublicCryptoFlow)),
+    myInvestorEquityPrincipal: suppliedOrCalculatedPrincipal(snapshot.myInvestorEquityPrincipal, baseline
+      ? snapshot.myInvestorEquityValue
+      : flowAdjustedPrincipal(previousSnapshot.myInvestorEquityPrincipal, previousSnapshot.myInvestorEquityValue, snapshot.myInvestorEquityExternalFlow ?? snapshot.myInvestorExternalFlow ?? 0)),
+    myInvestorFixedIncomePrincipal: suppliedOrCalculatedPrincipal(snapshot.myInvestorFixedIncomePrincipal, baseline
+      ? snapshot.myInvestorFixedIncomeValue
+      : flowAdjustedPrincipal(previousSnapshot.myInvestorFixedIncomePrincipal, previousSnapshot.myInvestorFixedIncomeValue, snapshot.myInvestorFixedIncomeExternalFlow ?? 0)),
+    myInvestorCryptoPrincipal: suppliedOrCalculatedPrincipal(snapshot.myInvestorCryptoPrincipal, baseline
+      ? snapshot.myInvestorCryptoValue
+      : flowAdjustedPrincipal(previousSnapshot.myInvestorCryptoPrincipal, previousSnapshot.myInvestorCryptoValue, snapshot.myInvestorCryptoExternalFlow ?? 0)),
+    urbanitaeRealEstatePrincipal: suppliedOrCalculatedPrincipal(snapshot.urbanitaeRealEstatePrincipal, baseline
+      ? snapshot.urbanitaeRealEstateValue
+      : flowAdjustedPrincipal(previousSnapshot.urbanitaeRealEstatePrincipal, previousSnapshot.urbanitaeRealEstateValue, snapshot.urbanitaeExternalFlow ?? 0)),
   }
+}
+
+function suppliedOrCalculatedPrincipal(supplied, calculated = 0) {
+  return Math.max(0, typeof supplied === 'number' && Number.isFinite(supplied) ? supplied : (calculated ?? 0))
 }
 
 function flowAdjustedPrincipal(previousPrincipal, previousValue, flow = 0) {
@@ -225,8 +236,8 @@ export function snapshotAssetBreakdown(snapshot) {
     depositAsset({ key: 'tradeRepublicCash', category: 'cash', label: 'TR cuenta corriente', value: snapshot.tradeRepublicCashBalance ?? 0 }),
     principalValueAsset({ key: 'tradeRepublicEquity', category: 'equity', label: 'TR renta variable', value: snapshot.tradeRepublicEquityValue ?? 0, principal: snapshot.tradeRepublicEquityPrincipal }),
     principalValueAsset({ key: 'myInvestorEquity', category: 'equity', label: 'MyInvestor renta variable', value: snapshot.myInvestorEquityValue ?? 0, principal: snapshot.myInvestorEquityPrincipal }),
-    depositAsset({ key: 'tradeRepublicFixedIncome', category: 'fixedIncome', label: 'TR renta fija', value: snapshot.tradeRepublicFixedIncomeValue ?? 0 }),
-    depositAsset({ key: 'myInvestorFixedIncome', category: 'fixedIncome', label: 'MyInvestor renta fija', value: snapshot.myInvestorFixedIncomeValue ?? 0 }),
+    principalValueAsset({ key: 'tradeRepublicFixedIncome', category: 'fixedIncome', label: 'TR renta fija', value: snapshot.tradeRepublicFixedIncomeValue ?? 0, principal: snapshot.tradeRepublicFixedIncomePrincipal }),
+    principalValueAsset({ key: 'myInvestorFixedIncome', category: 'fixedIncome', label: 'MyInvestor renta fija', value: snapshot.myInvestorFixedIncomeValue ?? 0, principal: snapshot.myInvestorFixedIncomePrincipal }),
     principalValueAsset({ key: 'tradeRepublicCrypto', category: 'crypto', label: 'TR cripto', value: snapshot.tradeRepublicCryptoValue ?? 0, principal: snapshot.tradeRepublicCryptoPrincipal }),
     principalValueAsset({ key: 'myInvestorCrypto', category: 'crypto', label: 'MyInvestor cripto', value: snapshot.myInvestorCryptoValue ?? 0, principal: snapshot.myInvestorCryptoPrincipal }),
     depositAsset({ key: 'criptanCrypto', category: 'crypto', label: 'Criptan', value: snapshot.criptanCryptoValue ?? 0 }),
@@ -241,7 +252,7 @@ export function fixedIncomeValue(snapshot) {
 export function marketGrowth(snapshot) {
   if (snapshot.snapshotOrigin === 'historical-visual') return undefined
   return snapshotAssetBreakdown(snapshot)
-    .filter((asset) => asset.category === 'equity' || asset.category === 'crypto' || asset.category === 'realEstate')
+    .filter((asset) => asset.category === 'equity' || asset.category === 'fixedIncome' || asset.category === 'crypto' || asset.category === 'realEstate')
     .reduce((sum, asset) => sum + (asset.growth ?? 0), 0)
 }
 
@@ -302,7 +313,6 @@ export function calculateDashboard(snapshots, options = {}) {
   const previousNetWorth = previous ? snapshotNetWorth(previous) : undefined
   const monthlyChange = previousNetWorth === undefined ? undefined : currentNetWorth - previousNetWorth
   const netContribution = (latest.tradeRepublicCashContribution ?? 0)
-    + totalTradeRepublicInvestmentFlow(latest)
     + totalManualExternalFlow(latest)
 
   const monthLabels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
@@ -366,7 +376,7 @@ export function calculateDashboard(snapshots, options = {}) {
         myInvestorCrypto: snapshot.myInvestorCryptoExternalFlow ?? 0,
         criptan: snapshot.criptanExternalFlow ?? 0,
         urbanitae: snapshot.urbanitaeExternalFlow ?? 0,
-        total: totalTradeRepublicInvestmentFlow(snapshot) + totalManualExternalFlow(snapshot),
+        total: (snapshot.tradeRepublicCashContribution ?? 0) + totalManualExternalFlow(snapshot),
       },
     }
   })

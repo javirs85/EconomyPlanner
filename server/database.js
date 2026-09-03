@@ -484,8 +484,10 @@ export function saveMonthlyClosing(snapshot) {
   const generatedCash = historicalSnapshot ? snapshot.generatedCash ?? snapshot.reportedGeneratedCash ?? 0 : tradeRepublicFacts.generatedCash
   const principals = resolveSnapshotPrincipals(snapshot, getPreviousMonthlySnapshot(snapshot.month), tradeRepublicFacts)
   const tradeRepublicEquityPrincipal = principals.tradeRepublicEquityPrincipal
+  const tradeRepublicFixedIncomePrincipal = principals.tradeRepublicFixedIncomePrincipal
   const tradeRepublicCryptoPrincipal = principals.tradeRepublicCryptoPrincipal
   const myInvestorEquityPrincipal = principals.myInvestorEquityPrincipal
+  const myInvestorFixedIncomePrincipal = principals.myInvestorFixedIncomePrincipal
   const myInvestorCryptoPrincipal = principals.myInvestorCryptoPrincipal
   const urbanitaeRealEstatePrincipal = principals.urbanitaeRealEstatePrincipal
 
@@ -591,14 +593,14 @@ export function saveMonthlyClosing(snapshot) {
     tradeRepublicFacts.tradeRepublicCryptoFlow,
     tradeRepublicEquityPrincipal,
     snapshot.tradeRepublicEquityUnrealizedProfit ?? snapshot.tradeRepublicEquityValue - tradeRepublicEquityPrincipal,
-    snapshot.tradeRepublicFixedIncomeValue,
-    0,
+    tradeRepublicFixedIncomePrincipal,
+    snapshot.tradeRepublicFixedIncomeUnrealizedProfit ?? snapshot.tradeRepublicFixedIncomeValue - tradeRepublicFixedIncomePrincipal,
     tradeRepublicCryptoPrincipal,
     snapshot.tradeRepublicCryptoUnrealizedProfit ?? snapshot.tradeRepublicCryptoValue - tradeRepublicCryptoPrincipal,
     myInvestorEquityPrincipal,
     snapshot.myInvestorEquityUnrealizedProfit ?? snapshot.myInvestorEquityValue - myInvestorEquityPrincipal,
-    snapshot.myInvestorFixedIncomeValue,
-    0,
+    myInvestorFixedIncomePrincipal,
+    snapshot.myInvestorFixedIncomeUnrealizedProfit ?? snapshot.myInvestorFixedIncomeValue - myInvestorFixedIncomePrincipal,
     myInvestorCryptoPrincipal,
     snapshot.myInvestorCryptoUnrealizedProfit ?? snapshot.myInvestorCryptoValue - myInvestorCryptoPrincipal,
     snapshot.criptanCryptoValue,

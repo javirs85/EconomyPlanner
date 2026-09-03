@@ -178,8 +178,10 @@ export function saveMonthlyClosing(data, snapshot) {
   const generatedCash = historicalSnapshot ? snapshot.generatedCash ?? snapshot.reportedGeneratedCash ?? 0 : tradeRepublicFacts.generatedCash
   const principals = resolveSnapshotPrincipals(snapshot, getPreviousMonthlySnapshot(data, snapshot.month), tradeRepublicFacts)
   const tradeRepublicEquityPrincipal = principals.tradeRepublicEquityPrincipal
+  const tradeRepublicFixedIncomePrincipal = principals.tradeRepublicFixedIncomePrincipal
   const tradeRepublicCryptoPrincipal = principals.tradeRepublicCryptoPrincipal
   const myInvestorEquityPrincipal = principals.myInvestorEquityPrincipal
+  const myInvestorFixedIncomePrincipal = principals.myInvestorFixedIncomePrincipal
   const myInvestorCryptoPrincipal = principals.myInvestorCryptoPrincipal
   const urbanitaeRealEstatePrincipal = principals.urbanitaeRealEstatePrincipal
   const nextSnapshot = {
@@ -199,14 +201,14 @@ export function saveMonthlyClosing(data, snapshot) {
     tradeRepublicCryptoFlow: tradeRepublicFacts.tradeRepublicCryptoFlow,
     tradeRepublicEquityPrincipal,
     tradeRepublicEquityUnrealizedProfit: snapshot.tradeRepublicEquityValue - tradeRepublicEquityPrincipal,
-    tradeRepublicFixedIncomePrincipal: snapshot.tradeRepublicFixedIncomeValue,
-    tradeRepublicFixedIncomeUnrealizedProfit: 0,
+    tradeRepublicFixedIncomePrincipal,
+    tradeRepublicFixedIncomeUnrealizedProfit: snapshot.tradeRepublicFixedIncomeValue - tradeRepublicFixedIncomePrincipal,
     tradeRepublicCryptoPrincipal,
     tradeRepublicCryptoUnrealizedProfit: snapshot.tradeRepublicCryptoValue - tradeRepublicCryptoPrincipal,
     myInvestorEquityPrincipal,
     myInvestorEquityUnrealizedProfit: snapshot.myInvestorEquityValue - myInvestorEquityPrincipal,
-    myInvestorFixedIncomePrincipal: snapshot.myInvestorFixedIncomeValue,
-    myInvestorFixedIncomeUnrealizedProfit: 0,
+    myInvestorFixedIncomePrincipal,
+    myInvestorFixedIncomeUnrealizedProfit: snapshot.myInvestorFixedIncomeValue - myInvestorFixedIncomePrincipal,
     myInvestorCryptoPrincipal,
     myInvestorCryptoUnrealizedProfit: snapshot.myInvestorCryptoValue - myInvestorCryptoPrincipal,
     criptanCryptoPrincipal: snapshot.criptanCryptoValue,
