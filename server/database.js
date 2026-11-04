@@ -10,6 +10,7 @@ import {
   netAmount,
   normalizeSnapshotOrigin,
   resolveSnapshotPrincipals,
+  resolveTradeRepublicCashContribution,
 } from '../shared/economyDomain.js'
 
 const workspace = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -482,6 +483,7 @@ export function saveMonthlyClosing(snapshot) {
   const tradeRepublicFacts = calculateTradeRepublicFacts(snapshot.periodStart, snapshot.periodEnd)
   const historicalSnapshot = snapshot.snapshotOrigin === 'historical-migration' || snapshot.snapshotOrigin === 'historical-visual'
   const generatedCash = historicalSnapshot ? snapshot.generatedCash ?? snapshot.reportedGeneratedCash ?? 0 : tradeRepublicFacts.generatedCash
+  const tradeRepublicCashContribution = resolveTradeRepublicCashContribution(snapshot, tradeRepublicFacts)
   const principals = resolveSnapshotPrincipals(snapshot, getPreviousMonthlySnapshot(snapshot.month), tradeRepublicFacts)
   const tradeRepublicEquityPrincipal = principals.tradeRepublicEquityPrincipal
   const tradeRepublicFixedIncomePrincipal = principals.tradeRepublicFixedIncomePrincipal
@@ -587,7 +589,7 @@ export function saveMonthlyClosing(snapshot) {
     normalizeSnapshotOrigin(snapshot.snapshotOrigin, snapshot.month),
     2,
     generatedCash,
-    tradeRepublicFacts.tradeRepublicCashContribution,
+    tradeRepublicCashContribution,
     tradeRepublicFacts.tradeRepublicEquityFlow,
     tradeRepublicFacts.tradeRepublicFixedIncomeFlow,
     tradeRepublicFacts.tradeRepublicCryptoFlow,

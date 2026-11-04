@@ -61,7 +61,7 @@ const netWorthFields = balanceFields.filter((field) => !profitFields.has(field))
 
 type BalanceField = typeof balanceFields[number]
 type PrincipalField = 'tradeRepublicEquityPrincipal' | 'tradeRepublicFixedIncomePrincipal' | 'tradeRepublicCryptoPrincipal' | 'myInvestorEquityPrincipal' | 'myInvestorFixedIncomePrincipal' | 'myInvestorCryptoPrincipal' | 'urbanitaeRealEstatePrincipal'
-type FlowField = 'myInvestorEquityExternalFlow' | 'myInvestorFixedIncomeExternalFlow' | 'myInvestorCryptoExternalFlow' | 'criptanExternalFlow' | 'urbanitaeExternalFlow'
+type FlowField = 'tradeRepublicCashContribution' | 'myInvestorEquityExternalFlow' | 'myInvestorFixedIncomeExternalFlow' | 'myInvestorCryptoExternalFlow' | 'criptanExternalFlow' | 'urbanitaeExternalFlow'
 type FormValues = Record<BalanceField | PrincipalField | FlowField, string>
 
 const emptyValues: FormValues = {
@@ -89,6 +89,7 @@ const emptyValues: FormValues = {
   urbanitaeRealEstateValue: '',
   urbanitaeRealEstateProfit: '',
   urbanitaeRealEstatePrincipal: '',
+  tradeRepublicCashContribution: '0',
   myInvestorEquityExternalFlow: '0',
   myInvestorFixedIncomeExternalFlow: '0',
   myInvestorCryptoExternalFlow: '0',
@@ -151,6 +152,7 @@ function snapshotToValues(snapshot: MonthlySnapshot): FormValues {
     myInvestorFixedIncomePrincipal: formatInputNumber(snapshot.myInvestorFixedIncomePrincipal ?? snapshot.myInvestorFixedIncomeValue ?? 0),
     myInvestorCryptoPrincipal: formatInputNumber(snapshot.myInvestorCryptoPrincipal ?? snapshot.myInvestorCryptoValue ?? 0),
     urbanitaeRealEstatePrincipal: formatInputNumber(snapshot.urbanitaeRealEstatePrincipal ?? snapshot.urbanitaeRealEstateValue ?? 0),
+    tradeRepublicCashContribution: formatInputNumber(snapshot.tradeRepublicCashContribution ?? 0),
     myInvestorEquityExternalFlow: formatInputNumber(snapshot.myInvestorEquityExternalFlow ?? snapshot.myInvestorExternalFlow ?? 0),
     myInvestorFixedIncomeExternalFlow: formatInputNumber(snapshot.myInvestorFixedIncomeExternalFlow ?? 0),
     myInvestorCryptoExternalFlow: formatInputNumber(snapshot.myInvestorCryptoExternalFlow ?? 0),
@@ -281,11 +283,14 @@ export function MonthlyClosingPanel({
     void getMonthlyClosing(period.month, period.periodStart, period.periodEnd)
       .then((status) => {
         if (ignore) return
-        setTradeRepublicFacts(status.tradeRepublicFacts ?? { ...emptyTradeRepublicFacts, tradeRepublicCashContribution: status.tradeRepublicExternalFlow })
+        const facts = status.tradeRepublicFacts ?? { ...emptyTradeRepublicFacts, tradeRepublicCashContribution: status.tradeRepublicExternalFlow }
+        setTradeRepublicFacts(facts)
         setCoverage(status.csvCoverage)
         setSaved(Boolean(status.snapshot))
         setExpanded(!status.snapshot)
-        setValues(status.snapshot ? snapshotToValues(status.snapshot) : emptyValues)
+        setValues(status.snapshot
+          ? snapshotToValues(status.snapshot)
+          : { ...emptyValues, tradeRepublicCashContribution: formatInputNumber(facts.tradeRepublicCashContribution) })
       })
       .catch((caught: unknown) => {
         if (!ignore) setError(caught instanceof Error ? caught.message : 'No se pudo consultar el cierre.')
@@ -439,6 +444,10 @@ export function MonthlyClosingPanel({
 
           <div className="closing-flow-row">
             <label className="balance-input">
+              <span>Aportación externa TR</span><small>CSV: {formatMoney(tradeRepublicFacts.tradeRepublicCashContribution)}. Usa 0 si viene de otra cuenta propia.</small>
+              <div><input {...inputFor('tradeRepublicCashContribution')} /><b>EUR</b></div>
+            </label>
+            <label className="balance-input">
               <span>MyInv RV flow</span><small>Flujo externo manual del periodo</small>
               <div><input {...inputFor('myInvestorEquityExternalFlow')} /><b>EUR</b></div>
             </label>
@@ -458,7 +467,6 @@ export function MonthlyClosingPanel({
               <span>Criptan flow</span><small>Flujo externo manual del periodo</small>
               <div><input {...inputFor('criptanExternalFlow')} /><b>EUR</b></div>
             </label>
-            <DetectedFlow label="TR aportado" value={tradeRepublicFacts.tradeRepublicCashContribution} />
             <DetectedFlow label="TR RV flow" value={tradeRepublicFacts.tradeRepublicEquityFlow} />
             <DetectedFlow label="TR RF flow" value={tradeRepublicFacts.tradeRepublicFixedIncomeFlow} />
             <DetectedFlow label="TR Cripto flow" value={tradeRepublicFacts.tradeRepublicCryptoFlow} />

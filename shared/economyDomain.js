@@ -13,6 +13,13 @@ export function positionProfit({ principal = 0, value = 0 }) {
   return value - principal
 }
 
+export function resolveTradeRepublicCashContribution(snapshot, tradeRepublicFacts = {}) {
+  const supplied = snapshot?.tradeRepublicCashContribution
+  return typeof supplied === 'number' && Number.isFinite(supplied)
+    ? supplied
+    : (tradeRepublicFacts.tradeRepublicCashContribution ?? 0)
+}
+
 export function classifyTradeRepublicTransactions(transactions, periodStart, periodEnd) {
   const facts = {
     tradeRepublicCashContribution: 0,

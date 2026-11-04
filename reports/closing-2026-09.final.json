@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 2,
+  "month": "2026-09",
+  "periodStart": "2026-09-04",
+  "periodEnd": "2026-10-03",
+  "status": "final",
+  "sources": {
+    "tradeRepublic": {
+      "kind": "csv",
+      "coverageStart": "2026-09-04",
+      "coverageEnd": "2026-10-03",
+      "fileName": "Exportación de transacción.csv",
+      "observedAt": "2026-10-04T12:27:16+02:00"
+    },
+    "myInvestor": {
+      "kind": "browser",
+      "observedAt": "2026-10-04T12:27:16+02:00",
+      "valuationDate": "2026-10-04"
+    },
+    "caixa": {
+      "kind": "browser",
+      "observedAt": "2026-10-04T12:27:16+02:00"
+    },
+    "criptan": {
+      "kind": "user",
+      "observedAt": "2026-10-04T12:27:16+02:00"
+    },
+    "urbanitae": {
+      "kind": "user",
+      "observedAt": "2026-10-04T12:27:16+02:00"
+    }
+  },
+  "balances": {
+    "caixa": 9858.12,
+    "tradeRepublicCash": 6282.32,
+    "tradeRepublicEquity": 17017.31,
+    "tradeRepublicFixedIncome": 5862.21,
+    "tradeRepublicCrypto": 2942.68,
+    "myInvestorEquity": 27601.17,
+    "myInvestorFixedIncome": 0,
+    "myInvestorCrypto": 2611.3,
+    "criptanCrypto": 1026.28,
+    "urbanitaeRealEstate": 2000
+  },
+  "flows": {
+    "myInvestorEquity": 0,
+    "myInvestorFixedIncome": 0,
+    "myInvestorCrypto": 0,
+    "criptan": 0,
+    "urbanitae": 0
+  },
+  "principals": {
+    "tradeRepublicEquity": 13434.01,
+    "tradeRepublicFixedIncome": 6003.53,
+    "tradeRepublicCrypto": 3748.66,
+    "myInvestorEquity": 25055.45,
+    "myInvestorFixedIncome": 0,
+    "myInvestorCrypto": 2411.91,
+    "urbanitaeRealEstate": 2000
+  },
+  "profits": {
+    "tradeRepublicEquity": 3583.3,
+    "tradeRepublicFixedIncome": -141.32,
+    "tradeRepublicCrypto": -805.98,
+    "myInvestorEquity": 2545.72,
+    "myInvestorFixedIncome": 0,
+    "myInvestorCrypto": 199.39,
+    "urbanitaeRealEstate": 0
+  },
+  "orders": [
+    { "source": "Trade Republic", "product": "Physical Swiss Gold USD", "date": "2026-09-09", "kind": "subscription", "amount": 2.69, "id": "c334f553-84cd-4503-a4ca-3963c7188e4c" },
+    { "source": "Trade Republic", "product": "Physical Swiss Gold USD", "date": "2026-09-16", "kind": "subscription", "amount": 1.53, "id": "f75f2363-e027-4c02-b2bd-89092bede8ca" },
+    { "source": "Trade Republic", "product": "Bitcoin", "date": "2026-09-21", "kind": "subscription", "amount": 1001.01, "id": "993ace78-bea2-47ef-9951-ba544f1aa511" },
+    { "source": "Trade Republic", "product": "Physical Swiss Gold USD", "date": "2026-09-23", "kind": "subscription", "amount": 5.06, "id": "6117f571-909a-4110-bd9c-f53e6be8c1e1" },
+    { "source": "Trade Republic", "product": "Bitcoin saveback", "date": "2026-10-01", "kind": "subscription", "amount": 12.15, "id": "01a0f569-9f9d-743f-83cd-23d31c64528a" },
+    { "source": "Trade Republic", "product": "Bitcoin", "date": "2026-10-02", "kind": "subscription", "amount": 49.94, "id": "0c6cb79f-5778-4474-8e34-0df0ff759736" },
+    { "source": "Trade Republic", "product": "Bitcoin", "date": "2026-10-02", "kind": "subscription", "amount": 12.11, "id": "88de2a5c-c390-4b82-a533-687feb110dca" },
+    { "source": "Trade Republic", "product": "Physical Swiss Gold USD", "date": "2026-10-02", "kind": "subscription", "amount": 7.53, "id": "fe4b6fb0-fffc-42f9-ad0c-6ae23f2e95f4" }
+  ],
+  "warnings": [
+    "The Trade Republic export contains two card transactions dated 2026-10-04. They fall outside the 2026-09-04 through 2026-10-03 closing period and were excluded from all closing calculations.",
+    "Trade Republic values were observed on 2026-10-04. Brokerage and fixed-income markets were closed, while crypto continued to move after the 2026-10-03 period end; the crypto value is therefore a next-day observation rather than an exact period-end mark.",
+    "Trade Republic's portfolio drawer defaults to 1D performance. On Max it displays 26.33% for Brokerage and -21.42% for Crypto, but it does not expose an exact cumulative euro profit and the percentages are not equivalent to value minus contributed principal. Principals were rolled from the prior verified closing using CSV flows.",
+    "Trade Republic fixed income displays zero performance for the held bonds. The report preserves the rolled principal of EUR 6003.53, producing an unrealized difference of EUR -141.32 against the current value.",
+    "MyInvestor was observed on 2026-10-04. Its funds overview is labelled as of 2026-10-04, while the WisdomTree Bitcoin instrument price is dated 2026-10-02.",
+    "No MyInvestor orders were found in the closing period; invested principals are unchanged and all value changes are market evolution."
+  ],
+  "evidence": [
+    { "source": "Trade Republic", "observedAt": "2026-10-04T12:27:16+02:00", "location": "Exportación de transacción.csv", "detail": "48 parsed rows; 0 unknown rows; 46 rows inside 2026-09-04 through 2026-10-03; no sales, external contributions, or withdrawals; two 2026-10-04 card rows excluded" },
+    { "source": "Trade Republic", "observedAt": "2026-10-04T12:27:16+02:00", "location": "web portfolio drawer", "detail": "cash 6282.32; Brokerage 17017.31; fixed income 5862.21; crypto 2942.68; Max performance 26.33% Brokerage and -21.42% crypto" },
+    { "source": "Trade Republic", "observedAt": "2026-10-04T12:27:16+02:00", "location": "CSV period classification", "detail": "equity principal flow 16.81; fixed-income principal flow 0.00; crypto principal flow 1075.21; generated cash interest 12.86; card expenses 2022.87" },
+    { "source": "MyInvestor", "observedAt": "2026-10-04T12:27:16+02:00", "location": "funds overview and six-month executed-order filter", "detail": "funds value 27601.17; invested 25055.45; profit 2545.72; no orders in closing period" },
+    { "source": "MyInvestor", "observedAt": "2026-10-04T12:27:16+02:00", "location": "WisdomTree Bitcoin position and six-month order filter", "detail": "value 2611.30; invested 2411.91; profit 199.39; instrument price dated 2026-10-02; no orders in closing period" },
+    { "source": "Caixa", "observedAt": "2026-10-04T12:27:16+02:00", "location": "accounts overview", "detail": "two account balances 8707.67 and 1150.45; total 9858.12" },
+    { "source": "Criptan", "observedAt": "2026-10-04T12:27:16+02:00", "location": "user-provided value", "detail": "value 1026.28; period flow confirmed as zero" },
+    { "source": "Urbanitae", "observedAt": "2026-10-04T12:27:16+02:00", "location": "user-provided value", "detail": "value 2000.00; period flow confirmed as zero" }
+  ]
+}
