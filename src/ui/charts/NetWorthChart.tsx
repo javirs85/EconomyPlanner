@@ -69,7 +69,7 @@ function ChartTooltip({ active, payload }: TooltipProps) {
       {month.snapshotOrigin === 'historical-visual' && <span className="tooltip-origin">Histórico visual</span>}
       {month.snapshotOrigin === 'baseline' && <span className="tooltip-origin baseline">Baseline fiable</span>}
       <dl>
-        <div><dt>Cash aportado</dt><dd>{formatMoney(month.cashFromSalary)}</dd></div>
+        <div><dt>Cash no invertido</dt><dd>{formatMoney(month.cashFromSalary)}</dd></div>
         <div><dt>Cash generado</dt><dd>{formatMoney(month.cashFromYields)}</dd></div>
         <div><dt>Renta fija</dt><dd>{formatMoney(month.fixedIncome)}</dd></div>
         <div><dt>Renta variable</dt><dd>{formatMoney(month.equityValue)}</dd></div>
@@ -236,7 +236,7 @@ export function NetWorthChart({ data, selectedPeriodEnd, onSelectSnapshot }: Net
           width={56}
         />
         <Tooltip content={<ChartTooltip />} cursor={{ fill: '#f2f6f3' }} />
-        <StackBar data={chartData} dataKey="cashFromSalary" name="Cash aportado" selectedPeriodEnd={selectedPeriodEnd} onSelectSnapshot={onSelectSnapshot} />
+        <StackBar data={chartData} dataKey="cashFromSalary" name="Cash no invertido" selectedPeriodEnd={selectedPeriodEnd} onSelectSnapshot={onSelectSnapshot} />
         <StackBar data={chartData} dataKey="cashFromYields" name="Cash generado" selectedPeriodEnd={selectedPeriodEnd} onSelectSnapshot={onSelectSnapshot} />
         <StackBar data={chartData} dataKey="fixedIncome" name="Renta fija" selectedPeriodEnd={selectedPeriodEnd} onSelectSnapshot={onSelectSnapshot} />
         <StackBar data={chartData} dataKey="equityBase" name="Renta variable" selectedPeriodEnd={selectedPeriodEnd} onSelectSnapshot={onSelectSnapshot} />
